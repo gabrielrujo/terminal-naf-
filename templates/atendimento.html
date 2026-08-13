@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+
+<p class="home-hero">Qual serviço você procura?</p>
+
+<form method="POST" action="{{ url_for('atendimento') }}">
+  <div class="servicos-grid">
+    {% for servico in servicos %}
+    <button type="submit" class="servico-card" name="servico" value="{{ servico.codigo }}">
+      <span class="nome">{{ servico.nome }}</span>
+      <span class="desc">{{ servico.descricao }}</span>
+    </button>
+    {% endfor %}
+  </div>
+</form>
+
+<div class="actions-row">
+  <a class="btn btn-ghost" href="{{ url_for('index') }}">Voltar ao início</a>
+</div>
+
+{% endblock %}

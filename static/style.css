@@ -1,0 +1,372 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&display=swap');
+
+:root {
+  /* -- paleta: "livro-caixa" -- civic / ledger, não o cream+terracota padrão -- */
+  --naf-ink-deep: #0F2E29;      /* fundo principal — verde-tinta profundo */
+  --naf-ink-deep-2: #163B34;    /* variação para cards sobre fundo escuro */
+  --naf-parchment: #F3EEDC;     /* papel — usado em cards e no carimbo */
+  --naf-parchment-dim: #E7E0C8;
+  --naf-ochre: #C6952E;         /* selo / destaque principal */
+  --naf-ochre-dark: #9C7420;
+  --naf-brick: #A6493B;         /* alerta / ação secundária, uso raro */
+  --naf-ink-text: #17221F;      /* texto sobre papel */
+  --naf-line: rgba(243, 238, 220, 0.18);
+
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-body: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+
+  --radius: 14px;
+  --touch-min: 96px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--naf-ink-deep);
+  color: var(--naf-parchment);
+  font-family: var(--font-body);
+  -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
+}
+
+body {
+  background-image:
+    linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0) 220px),
+    repeating-linear-gradient(180deg, transparent, transparent 39px, var(--naf-line) 40px);
+}
+
+.screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 32px 40px 56px;
+}
+
+.topbar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--naf-line);
+  padding-bottom: 18px;
+  margin-bottom: 36px;
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.brand .eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--naf-ochre);
+}
+
+.brand h1 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 34px;
+  margin: 2px 0 0;
+  letter-spacing: -0.01em;
+}
+
+.clock {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--naf-parchment-dim);
+  text-align: right;
+}
+
+.home-hero {
+  font-family: var(--font-display);
+  font-size: 22px;
+  line-height: 1.5;
+  max-width: 640px;
+  color: var(--naf-parchment-dim);
+  margin-bottom: 34px;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.tile {
+  min-height: var(--touch-min);
+  background: var(--naf-parchment);
+  color: var(--naf-ink-text);
+  border: none;
+  border-radius: var(--radius);
+  padding: 26px 28px;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-family: var(--font-body);
+  box-shadow: 0 10px 0 rgba(0,0,0,0.18);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  text-decoration: none;
+}
+
+.tile:active {
+  transform: translateY(6px);
+  box-shadow: 0 4px 0 rgba(0,0,0,0.18);
+}
+
+.tile .tile-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 22px;
+}
+
+.tile .tile-sub {
+  font-size: 14px;
+  color: #4A554F;
+}
+
+.tile.accent {
+  background: var(--naf-ochre);
+}
+.tile.accent .tile-sub { color: #4a3510; }
+
+/* -- grade de serviços -- */
+.servicos-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.servico-card {
+  background: var(--naf-parchment);
+  color: var(--naf-ink-text);
+  border-radius: var(--radius);
+  border: none;
+  min-height: var(--touch-min);
+  padding: 22px;
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 8px 0 rgba(0,0,0,0.18);
+}
+.servico-card:active { transform: translateY(5px); box-shadow: 0 3px 0 rgba(0,0,0,0.18); }
+.servico-card .nome { font-family: var(--font-display); font-weight: 600; font-size: 20px; }
+.servico-card .desc { font-size: 13px; color: #4A554F; }
+
+/* -- carimbo / elemento de assinatura -- */
+.carimbo-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 40px 0;
+}
+
+.carimbo {
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  border: 4px dashed var(--naf-ochre);
+  background: var(--naf-parchment);
+  color: var(--naf-ink-text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transform: rotate(-6deg);
+  box-shadow: 0 0 0 8px rgba(198,149,46,0.08);
+}
+
+.carimbo .selo-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--naf-ochre-dark);
+}
+
+.carimbo .protocolo {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 20px;
+  letter-spacing: 0.02em;
+}
+
+.carimbo .servico-nome {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+/* -- botões -- */
+.btn {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 17px;
+  border-radius: 999px;
+  padding: 18px 34px;
+  border: none;
+  cursor: pointer;
+  min-height: var(--touch-min);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-primary {
+  background: var(--naf-ochre);
+  color: #241A05;
+}
+.btn-primary:active { background: var(--naf-ochre-dark); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--naf-parchment);
+  border: 1px solid var(--naf-line);
+}
+
+.actions-row {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+/* -- avaliação -- */
+.notas-row {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  margin: 30px 0;
+}
+
+.nota-btn {
+  width: 78px;
+  height: 78px;
+  border-radius: 50%;
+  border: 2px solid var(--naf-parchment-dim);
+  background: transparent;
+  color: var(--naf-parchment);
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.nota-btn:active { background: var(--naf-ochre); color: #241A05; border-color: var(--naf-ochre); }
+
+/* -- informações / materiais -- */
+.lista-simples { display: flex; flex-direction: column; gap: 14px; }
+
+.item-linha {
+  background: var(--naf-ink-deep-2);
+  border: 1px solid var(--naf-line);
+  border-radius: 10px;
+  padding: 18px 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.item-linha .titulo { font-family: var(--font-display); font-size: 18px; }
+.item-linha .badge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--naf-ochre);
+  border: 1px solid var(--naf-ochre-dark);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+/* -- dashboard / livro-caixa -- */
+.ledger {
+  background: var(--naf-parchment);
+  color: var(--naf-ink-text);
+  border-radius: var(--radius);
+  padding: 30px 36px;
+}
+
+.ledger-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 2px solid var(--naf-ink-text);
+  padding-bottom: 12px;
+  margin-bottom: 18px;
+}
+
+.ledger-header .mes {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #5c6a63;
+}
+
+.ledger-total .num {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 40px;
+}
+.ledger-total .lbl {
+  font-size: 13px;
+  color: #5c6a63;
+}
+
+.ledger-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px dotted #b9b096;
+  font-family: var(--font-mono);
+  font-size: 15px;
+}
+.ledger-row .bar {
+  flex: 1;
+  margin: 0 16px;
+  height: 8px;
+  background: #E0D9BF;
+  border-radius: 4px;
+  overflow: hidden;
+  align-self: center;
+}
+.ledger-row .bar-fill { height: 100%; background: var(--naf-ochre); }
+
+.ledger-stats {
+  display: flex;
+  gap: 24px;
+  margin-top: 24px;
+}
+.ledger-stat {
+  flex: 1;
+  background: var(--naf-parchment-dim);
+  border-radius: 10px;
+  padding: 18px 20px;
+}
+.ledger-stat .num { font-family: var(--font-mono); font-size: 30px; font-weight: 600; }
+.ledger-stat .lbl { font-size: 13px; color: #5c6a63; }
+
+footer.rodape {
+  margin-top: auto;
+  padding-top: 30px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--naf-parchment-dim);
+  opacity: 0.6;
+}
+
+@media (max-width: 720px) {
+  .servicos-grid, .tiles { grid-template-columns: 1fr; }
+  .screen { padding: 20px 18px 40px; }
+}

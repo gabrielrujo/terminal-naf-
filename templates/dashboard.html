@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="ledger">
+  <div class="ledger-header">
+    <span class="mes">Livro de atendimentos</span>
+    <div class="ledger-total">
+      <span class="num">{{ total }}</span>
+      <span class="lbl">atendimentos</span>
+    </div>
+  </div>
+
+  {% for row in por_servico %}
+  <div class="ledger-row">
+    <span>{{ row['servico_nome'] }}</span>
+    <span class="bar"><span class="bar-fill" style="width: {{ (row['n'] / total * 100) if total else 0 }}%;"></span></span>
+    <span>{{ row['n'] }}</span>
+  </div>
+  {% else %}
+  <div class="ledger-row"><span>Nenhum atendimento registrado ainda.</span></div>
+  {% endfor %}
+
+  <div class="ledger-stats">
+    <div class="ledger-stat">
+      <div class="num">{{ taxa_resolucao }}%</div>
+      <div class="lbl">Taxa de resolução</div>
+    </div>
+    <div class="ledger-stat">
+      <div class="num">{{ media_nota if media_nota is not none else '—' }}{% if media_nota is not none %}/5{% endif %}</div>
+      <div class="lbl">Satisfação ({{ n_avaliacoes }} avaliações)</div>
+    </div>
+  </div>
+</div>
+
+<div class="actions-row">
+  <a class="btn btn-ghost" href="{{ url_for('index') }}">Voltar ao início</a>
+</div>
+
+{% endblock %}

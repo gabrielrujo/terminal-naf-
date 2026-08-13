@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+
+<p class="home-hero">Conheça os serviços disponíveis no NAF.</p>
+
+<div class="lista-simples">
+  {% for servico in servicos %}
+  <div class="item-linha">
+    <div>
+      <div class="titulo">{{ servico.nome }}</div>
+      <div style="margin-top:6px; font-size:14px; color:var(--naf-parchment-dim);">{{ servico.descricao }}</div>
+    </div>
+    <span class="badge">{{ servico.codigo }}</span>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="actions-row">
+  <a class="btn btn-primary" href="{{ url_for('atendimento') }}">Iniciar atendimento</a>
+  <a class="btn btn-ghost" href="{{ url_for('index') }}">Voltar ao início</a>
+</div>
+
+{% endblock %}

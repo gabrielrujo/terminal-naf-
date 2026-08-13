@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% if enviado %}
+  <p class="home-hero">Obrigado! Sua avaliação foi registrada para o protocolo <strong>{{ protocolo }}</strong>.</p>
+  <div class="actions-row">
+    <a class="btn btn-primary" href="{{ url_for('index') }}">Voltar ao início</a>
+  </div>
+{% else %}
+  <p class="home-hero">Como foi o seu atendimento hoje? (Protocolo {{ protocolo }})</p>
+  <form method="POST" action="{{ url_for('avaliacao', protocolo=protocolo) }}">
+    <div class="notas-row">
+      {% for n in range(1, 6) %}
+      <button type="submit" name="nota" value="{{ n }}" class="nota-btn">{{ n }}</button>
+      {% endfor %}
+    </div>
+  </form>
+  <p style="text-align:center; font-size:13px; color:var(--naf-parchment-dim);">1 = muito ruim &nbsp;·&nbsp; 5 = excelente</p>
+{% endif %}
+
+{% endblock %}

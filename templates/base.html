@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>{% block title %}Terminal NAF{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="screen">
+    <div class="topbar">
+      <div class="brand">
+        <span class="eyebrow">Núcleo de Apoio Contábil e Fiscal</span>
+        <h1>Terminal NAF</h1>
+      </div>
+      <div class="clock" id="relogio"></div>
+    </div>
+
+    {% block content %}{% endblock %}
+
+    <footer class="rodape">Protótipo — Orange Pi 5 · desenvolvimento e prototipagem de terminal de suporte tecnológico ao NAF</footer>
+  </div>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

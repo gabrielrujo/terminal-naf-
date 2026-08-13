@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+
+<p class="home-hero">Bem-vindo ao Terminal NAF. Escolha uma opção para iniciar.</p>
+
+<div class="tiles">
+  <a class="tile accent" href="{{ url_for('atendimento') }}">
+    <span class="tile-title">Iniciar atendimento</span>
+    <span class="tile-sub">Selecione o serviço e gere seu protocolo.</span>
+  </a>
+
+  <a class="tile" href="{{ url_for('informacoes') }}">
+    <span class="tile-title">Informações e serviços</span>
+    <span class="tile-sub">Consulte os serviços oferecidos pelo NAF.</span>
+  </a>
+
+  <a class="tile" href="{{ url_for('materiais') }}">
+    <span class="tile-title">Materiais educativos</span>
+    <span class="tile-sub">Acesse guias rápidos para apoio ao atendimento.</span>
+  </a>
+
+  <a class="tile" href="{{ url_for('dashboard') }}">
+    <span class="tile-title">Painel do coordenador</span>
+    <span class="tile-sub">Veja estatísticas básicas dos atendimentos.</span>
+  </a>
+</div>
+
+{% endblock %}

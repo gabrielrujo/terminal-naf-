@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+
+<p class="home-hero">Guias rápidos para consultar antes ou durante o atendimento.</p>
+
+<div class="lista-simples">
+  {% for m in materiais %}
+  <div class="item-linha">
+    <div class="titulo">{{ m.titulo }}</div>
+    <span class="badge">{{ m.categoria }}</span>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="actions-row">
+  <a class="btn btn-ghost" href="{{ url_for('index') }}">Voltar ao início</a>
+</div>
+
+{% endblock %}
