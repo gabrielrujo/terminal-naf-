@@ -11,11 +11,11 @@
   <form method="POST" action="{{ url_for('avaliacao', protocolo=protocolo) }}">
     <div class="notas-row">
       {% for n in range(1, 6) %}
-      <button type="submit" name="nota" value="{{ n }}" class="nota-btn">{{ n }}</button>
+      <button type="submit" name="nota" value="{{ n }}" class="nota-btn" aria-label="Avaliar com nota {{ n }} de 5">{{ n }}</button>
       {% endfor %}
     </div>
   </form>
-  <p style="text-align:center; font-size:13px; color:var(--naf-parchment-dim);">1 = muito ruim &nbsp;·&nbsp; 5 = excelente</p>
+  <p style="text-align:center; font-size:13px; color:var(--muted);">1 = muito ruim &nbsp;·&nbsp; 5 = excelente</p>
 {% endif %}
 
 {% endblock %}

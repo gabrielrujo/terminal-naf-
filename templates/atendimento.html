@@ -6,7 +6,7 @@
 <form method="POST" action="{{ url_for('atendimento') }}">
   <div class="servicos-grid">
     {% for servico in servicos %}
-    <button type="submit" class="servico-card" name="servico" value="{{ servico.codigo }}">
+    <button type="submit" class="servico-card" name="servico" value="{{ servico.codigo }}" aria-label="Selecionar {{ servico.nome }}: {{ servico.descricao }}">
       <span class="nome">{{ servico.nome }}</span>
       <span class="desc">{{ servico.descricao }}</span>
     </button>
