@@ -5,15 +5,24 @@
   <div class="ledger-header">
     <span class="mes">Livro de atendimentos</span>
     <div class="ledger-total">
-      <span class="num">{{ total }}</span>
-      <span class="lbl">atendimentos</span>
+      <span class="num">{{ totais['concluidos'] or 0 }}</span>
+      <span class="lbl">concluídos</span>
     </div>
   </div>
+
+  <div class="summary-grid">
+    <div class="summary-card"><strong>{{ totais['solicitados'] or 0 }}</strong><span>Senhas emitidas</span></div>
+    <div class="summary-card"><strong>{{ totais['aguardando'] or 0 }}</strong><span>Aguardando</span></div>
+    <div class="summary-card"><strong>{{ totais['em_atendimento'] or 0 }}</strong><span>Em atendimento</span></div>
+    <div class="summary-card"><strong>{{ totais['concluidos'] or 0 }}</strong><span>Concluídos</span></div>
+  </div>
+
+  <h2 class="section-title">Concluídos por serviço</h2>
 
   {% for row in por_servico %}
   <div class="ledger-row">
     <span>{{ row['servico_nome'] }}</span>
-    <span class="bar"><span class="bar-fill" style="width: {{ (row['n'] / total * 100) if total else 0 }}%;"></span></span>
+    <span class="bar"><span class="bar-fill" style="width: {{ (row['n'] / totais['concluidos'] * 100) if totais['concluidos'] else 0 }}%;"></span></span>
     <span>{{ row['n'] }}</span>
   </div>
   {% else %}
@@ -33,7 +42,8 @@
 </div>
 
 <div class="actions-row">
-  <a class="btn btn-ghost" href="{{ url_for('index') }}">Voltar ao início</a>
+  <a class="btn btn-primary" href="{{ url_for('fila') }}">Ver fila</a>
+  <a class="btn btn-ghost" href="{{ url_for('usuarios') }}">Gerenciar usuários</a>
 </div>
 
 {% endblock %}

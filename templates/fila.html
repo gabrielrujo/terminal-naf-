@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Fila — Terminal NAF{% endblock %}
+{% block content %}
+
+<div class="page-heading">
+  <div><span class="badge-heading">Painel do atendente</span><h2>Fila de atendimento</h2></div>
+  <a class="btn btn-ghost" href="{{ url_for('fila') }}">Atualizar fila</a>
+</div>
+
+<div class="queue-list">
+  {% for item in atendimentos %}
+  <article class="queue-item {{ item['status'] }}">
+    <div class="queue-main">
+      <span class="status-badge">{{ 'Em atendimento' if item['status'] == 'em_atendimento' else 'Aguardando' }}</span>
+      <strong>{{ item['protocolo'] }}</strong>
+      <span>{{ item['servico_nome'] }}</span>
+      {% if item['atendente_nome'] %}<small>Responsável: {{ item['atendente_nome'] }}</small>{% endif %}
+    </div>
+    <div class="queue-actions">
+      {% if item['status'] == 'aguardando' %}
+      <form method="POST" action="{{ url_for('iniciar_atendimento', atendimento_id=item['id']) }}">
+        <button class="btn btn-primary" type="submit">Iniciar</button>
+      </form>
+      {% elif item['atendente_id'] == g.usuario['id'] or g.usuario['perfil'] == 'coordenador' %}
+      <form method="POST" action="{{ url_for('concluir_atendimento', atendimento_id=item['id']) }}">
+        <button class="btn btn-primary" type="submit">Concluir</button>
+      </form>
+      {% endif %}
+    </div>
+  </article>
+  {% else %}
+  <div class="empty-state">Nenhuma pessoa aguardando atendimento.</div>
+  {% endfor %}
+</div>
+
+{% endblock %}

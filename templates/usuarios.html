@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Usuários — Terminal NAF{% endblock %}
+{% block content %}
+
+<div class="page-heading">
+  <div><span class="badge-heading">Coordenação</span><h2>Controle de usuários</h2></div>
+</div>
+
+<div class="two-columns">
+  <section class="form-panel">
+    <h3>Novo usuário</h3>
+    <form method="POST" class="stack-form">
+      <label>Nome<input name="nome" required></label>
+      <label>Login<input name="login" required autocomplete="off"></label>
+      <label>Senha inicial<input name="senha" type="password" minlength="6" required autocomplete="new-password"></label>
+      <label>Perfil
+        <select name="perfil">
+          <option value="atendente">Atendente</option>
+          <option value="coordenador">Coordenador</option>
+        </select>
+      </label>
+      <button class="btn btn-primary" type="submit">Cadastrar</button>
+    </form>
+  </section>
+
+  <section class="user-list">
+    {% for usuario in usuarios %}
+    <article class="user-item">
+      <div><strong>{{ usuario['nome'] }}</strong><span>@{{ usuario['login'] }} · {{ usuario['perfil'] }}</span></div>
+      <form method="POST" action="{{ url_for('alternar_usuario', usuario_id=usuario['id']) }}">
+        <button class="btn btn-small {{ 'btn-ghost' if usuario['ativo'] else 'btn-primary' }}" type="submit" {% if usuario['id'] == g.usuario['id'] %}disabled{% endif %}>
+          {{ 'Desativar' if usuario['ativo'] else 'Ativar' }}
+        </button>
+      </form>
+    </article>
+    {% endfor %}
+  </section>
+</div>
+
+{% endblock %}

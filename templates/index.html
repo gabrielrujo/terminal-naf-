@@ -19,9 +19,9 @@
     <span class="tile-sub">Acesse guias rápidos para apoio ao atendimento.</span>
   </a>
 
-  <a class="tile" href="{{ url_for('dashboard') }}">
-    <span class="tile-title">Painel do coordenador</span>
-    <span class="tile-sub">Veja estatísticas básicas dos atendimentos.</span>
+  <a class="tile" href="{{ url_for('fila') if g.usuario else url_for('login') }}">
+    <span class="tile-title">Acesso da equipe</span>
+    <span class="tile-sub">Fila, atendimentos, indicadores e usuários.</span>
   </a>
 </div>
 

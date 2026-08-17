@@ -1,19 +1,16 @@
 {% extends "base.html" %}
 {% block content %}
 
-<p class="home-hero">Atendimento registrado. Guarde ou anote seu número de protocolo — ele também confirma sua senha no painel de chamadas.</p>
+<p class="home-hero">Senha emitida. Aguarde o chamado da equipe do NAF.</p>
 
 <div class="carimbo-wrap">
   <div class="carimbo">
-    <span class="selo-label">Protocolo NAF</span>
+    <span class="selo-label">Aguardando atendimento</span>
     <span class="protocolo">{{ atendimento['protocolo'] }}</span>
     <span class="servico-nome">{{ atendimento['servico_nome'] }}</span>
   </div>
 </div>
 
-<div class="actions-row">
-  <a class="btn btn-primary" href="{{ url_for('avaliacao', protocolo=atendimento['protocolo']) }}">Avaliar atendimento</a>
-  <a class="btn btn-ghost" href="{{ url_for('index') }}">Voltar ao início</a>
-</div>
+<p class="helper-text">A emissão desta senha não conta como atendimento concluído. A avaliação será liberada somente depois que um atendente finalizar o serviço.</p>
 
 {% endblock %}

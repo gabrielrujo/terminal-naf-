@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Login da equipe — Terminal NAF{% endblock %}
+{% block content %}
+
+<div class="form-panel compact">
+  <span class="badge-heading">Área restrita</span>
+  <h2>Acesso da equipe</h2>
+  <form method="POST" class="stack-form">
+    <label>Login<input name="login" required autofocus autocomplete="username"></label>
+    <label>Senha<input name="senha" type="password" required autocomplete="current-password"></label>
+    <button class="btn btn-primary" type="submit">Entrar</button>
+  </form>
+</div>
+
+{% endblock %}

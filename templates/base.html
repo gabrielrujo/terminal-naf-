@@ -7,7 +7,7 @@
   <title>{% block title %}Terminal NAF{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
+<body data-area="{{ 'equipe' if g.usuario else 'terminal' }}">
   <div class="screen">
     <header class="topbar">
       <div class="brand">
@@ -16,6 +16,39 @@
       </div>
       <div class="clock" id="relogio"></div>
     </header>
+
+    {% if g.usuario %}
+    <nav class="team-nav" aria-label="Navegação da equipe">
+      <span class="team-user">{{ g.usuario['nome'] }} · {{ g.usuario['perfil'] }}</span>
+      <a href="{{ url_for('fila') }}">Fila</a>
+      {% if g.usuario['perfil'] == 'coordenador' %}
+      <a href="{{ url_for('dashboard') }}">Dashboard</a>
+      <a href="{{ url_for('usuarios') }}">Usuários</a>
+      {% endif %}
+      <form method="POST" action="{{ url_for('logout') }}">
+        <button type="submit" class="link-button">Sair</button>
+      </form>
+    </nav>
+    {% endif %}
+
+    {% with mensagens = get_flashed_messages(with_categories=true) %}
+      {% if mensagens %}
+        <div class="messages" aria-live="polite">
+          {% for categoria, mensagem in mensagens %}
+            <div class="message {{ categoria }}">{{ mensagem }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% if request.endpoint != 'index' %}
+      {% set voltar_para = url_for('fila') if g.usuario and request.endpoint != 'fila' else url_for('index') %}
+      <div class="page-back-row">
+        <a class="page-back" href="{{ voltar_para }}" aria-label="Voltar para {{ 'a fila' if g.usuario and request.endpoint != 'fila' else 'o início' }}">
+          <span aria-hidden="true">←</span> Voltar
+        </a>
+      </div>
+    {% endif %}
 
     <main>
       {% block content %}{% endblock %}

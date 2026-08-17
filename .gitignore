@@ -3,4 +3,5 @@ venv/
 __pycache__/
 *.pyc
 naf_terminal.db
+naf_terminal.backup-*.db
 .DS_Store

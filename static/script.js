@@ -15,6 +15,7 @@ let timerInatividade;
 
 function reiniciarTimerInatividade() {
   clearTimeout(timerInatividade);
+  if (document.body.dataset.area === 'equipe') return;
   if (window.location.pathname === '/') return;
   timerInatividade = setTimeout(() => {
     window.location.href = '/';

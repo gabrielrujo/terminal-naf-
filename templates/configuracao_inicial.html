@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Configuração inicial — Terminal NAF{% endblock %}
+{% block content %}
+
+<div class="form-panel">
+  <span class="badge-heading">Primeiro acesso</span>
+  <h2>Crie o usuário da coordenação</h2>
+  <p>Esta etapa aparece somente enquanto não existe nenhum usuário no sistema.</p>
+  <form method="POST" class="stack-form">
+    <label>Nome completo<input name="nome" required autocomplete="name"></label>
+    <label>Login<input name="login" required autocomplete="username"></label>
+    <label>Senha<input name="senha" type="password" minlength="6" required autocomplete="new-password"></label>
+    <button class="btn btn-primary" type="submit">Criar coordenação</button>
+  </form>
+</div>
+
+{% endblock %}
