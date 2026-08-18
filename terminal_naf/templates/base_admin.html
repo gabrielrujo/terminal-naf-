@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1740">
+  <title>{% block title %}Área interna — Terminal NAF{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body class="admin-shell" data-area="admin">
+  <aside class="sidebar">
+    <a class="brand brand-admin" href="{{ url_for('atendente.painel') }}">
+      <span class="brand-mark">NAF</span>
+      <span><strong>Terminal NAF</strong><small>Área interna</small></span>
+    </a>
+    <nav class="admin-nav" aria-label="Navegação principal">
+      {% if usuario_atual.perfil == 'ADMIN' %}
+        <a class="{{ 'active' if request.endpoint == 'admin.dashboard' }}" href="{{ url_for('admin.dashboard') }}">Dashboard</a>
+      {% endif %}
+      <a class="{{ 'active' if request.endpoint == 'atendente.painel' }}" href="{{ url_for('atendente.painel') }}">Fila</a>
+      <a class="{{ 'active' if request.endpoint in ('atendente.meus_atendimentos', 'admin.atendimentos') }}" href="{{ url_for('admin.atendimentos') if usuario_atual.perfil == 'ADMIN' else url_for('atendente.meus_atendimentos') }}">Atendimentos</a>
+      {% if usuario_atual.perfil == 'ADMIN' %}
+        <a class="{{ 'active' if request.endpoint == 'admin.avaliacoes' }}" href="{{ url_for('admin.avaliacoes') }}">Avaliações</a>
+        <a class="{{ 'active' if request.endpoint == 'admin.usuarios' }}" href="{{ url_for('admin.usuarios') }}">Usuários</a>
+        <a class="{{ 'active' if request.endpoint == 'admin.servicos' }}" href="{{ url_for('admin.servicos') }}">Serviços</a>
+      {% endif %}
+    </nav>
+    <div class="sidebar-user">
+      <span>{{ usuario_atual.nome }}</span>
+      <small>{{ 'Administrador' if usuario_atual.perfil == 'ADMIN' else 'Atendente' }}</small>
+      <form action="{{ url_for('auth.logout') }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="nav-logout" type="submit">Sair</button>
+      </form>
+    </div>
+  </aside>
+
+  <div class="admin-workspace">
+    <header class="admin-header">
+      <button class="menu-toggle" type="button" data-menu-toggle aria-label="Abrir menu">☰</button>
+      <div>
+        <span class="eyebrow">Operação NAF</span>
+        <h1>{% block page_title %}Área interna{% endblock %}</h1>
+      </div>
+      <time class="live-clock" data-clock aria-live="off"></time>
+    </header>
+
+    <div class="flash-region admin-flashes" aria-live="polite">
+      {% with mensagens = get_flashed_messages(with_categories=true) %}
+        {% for categoria, mensagem in mensagens %}
+          <div class="flash {{ categoria }}">{{ mensagem }}</div>
+        {% endfor %}
+      {% endwith %}
+    </div>
+
+    <main class="admin-main">{% block content %}{% endblock %}</main>
+  </div>
+  <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+</body>
+</html>

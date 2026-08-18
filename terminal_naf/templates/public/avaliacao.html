@@ -1,0 +1,31 @@
+{% extends "base_public.html" %}
+{% block title %}Avaliação — Terminal NAF{% endblock %}
+{% block content %}
+{% if enviado %}
+  <section class="success-state">
+    <span class="success-icon" aria-hidden="true">✓</span>
+    <span class="eyebrow">Avaliação concluída</span>
+    <h1>Obrigado! Sua avaliação foi registrada.</h1>
+    <p>Sua opinião ajuda o NAF a melhorar o atendimento.</p>
+    <a class="button primary" href="{{ url_for('public.index') }}">Voltar ao início</a>
+  </section>
+{% else %}
+  <div class="page-intro centered">
+    <span class="eyebrow">Senha {{ atendimento['senha'] }}</span>
+    <h1>Como foi o seu atendimento?</h1>
+    <p>Escolha uma nota de 1 a 5.</p>
+  </div>
+  <form class="rating-card" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="rating-scale">
+      {% for nota in range(1, 6) %}
+        <button type="submit" name="nota" value="{{ nota }}" aria-label="Avaliar com nota {{ nota }} de 5">{{ nota }}</button>
+      {% endfor %}
+    </div>
+    <div class="rating-labels"><span>1 = muito ruim</span><span>5 = excelente</span></div>
+  </form>
+  <div class="public-actions centered-actions">
+    <a class="button secondary" href="{{ url_for('public.protocolo', protocolo=atendimento['protocolo']) }}">← Voltar ao protocolo</a>
+  </div>
+{% endif %}
+{% endblock %}

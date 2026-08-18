@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1740">
+  <title>{% block title %}Terminal NAF{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body class="public-shell {{ 'home-page' if request.endpoint == 'public.index' else '' }}" data-area="public" data-home="{{ 'true' if request.endpoint == 'public.index' else 'false' }}">
+  <header class="public-header">
+    <a class="brand" href="{{ url_for('public.index') }}" aria-label="Ir para o início">
+      <span class="brand-mark">NAF</span>
+      <span><strong>Terminal NAF</strong><small>Núcleo de Apoio Contábil e Fiscal</small></span>
+    </a>
+    <time class="live-clock" data-clock aria-live="off"></time>
+  </header>
+
+  <div class="flash-region" aria-live="polite">
+    {% with mensagens = get_flashed_messages(with_categories=true) %}
+      {% for categoria, mensagem in mensagens %}
+        <div class="flash {{ categoria }}">{{ mensagem }}</div>
+      {% endfor %}
+    {% endwith %}
+  </div>
+
+  <main class="public-main">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="public-footer">
+    <span>Atendimento gratuito e orientativo</span>
+    <a href="{{ url_for('public.index') }}">Início</a>
+  </footer>
+  <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+</body>
+</html>

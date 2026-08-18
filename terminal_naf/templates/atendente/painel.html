@@ -1,0 +1,78 @@
+{% extends "base_admin.html" %}
+{% block title %}Fila — Terminal NAF{% endblock %}
+{% block page_title %}Fila de atendimento{% endblock %}
+{% block content %}
+<section class="metric-grid compact-metrics">
+  <article><span>Aguardando</span><strong>{{ resumo['aguardando'] or 0 }}</strong></article>
+  <article><span>Em atendimento</span><strong>{{ resumo['em_atendimento'] or 0 }}</strong></article>
+  <article><span>Concluídos hoje</span><strong>{{ resumo['concluidos_hoje'] or 0 }}</strong></article>
+</section>
+
+{% if atual %}
+<section class="current-service">
+  <div class="section-heading"><div><span class="eyebrow">Atendimento atual</span><h2>{{ atual['senha'] }} · {{ atual['servico_nome'] }}</h2></div><span class="status-chip em_atendimento">Em atendimento</span></div>
+  <div class="current-details">
+    <div><small>Chegada</small><strong>{{ atual['criado_em']|hora }}</strong></div>
+    <div><small>Início</small><strong>{{ atual['iniciado_em']|hora }}</strong></div>
+    <div><small>Espera</small><strong>{{ atual['criado_em']|duracao_minutos(atual['iniciado_em']) }} min</strong></div>
+    <div><small>Protocolo</small><strong>{{ atual['protocolo'] }}</strong></div>
+  </div>
+  <div class="row-actions">
+    <form method="post" action="{{ url_for('atendente.concluir', atendimento_id=atual['id']) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="button primary" type="submit">Concluir atendimento</button>
+    </form>
+    <form method="post" action="{{ url_for('atendente.cancelar', atendimento_id=atual['id']) }}" data-confirm="Cancelar este atendimento?">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="button danger-ghost" type="submit">Cancelar</button>
+    </form>
+  </div>
+</section>
+{% elif chamado %}
+<section class="current-service called">
+  <div class="section-heading"><div><span class="eyebrow">Senha chamada</span><h2>{{ chamado['senha'] }} · {{ chamado['servico_nome'] }}</h2></div><span class="status-chip chamado">Aguardando início</span></div>
+  <p>Confirme quando o cidadão chegar ao atendimento.</p>
+  <div class="row-actions">
+    <form method="post" action="{{ url_for('atendente.iniciar', atendimento_id=chamado['id']) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="button primary" type="submit">Iniciar atendimento</button>
+    </form>
+    <form method="post" action="{{ url_for('atendente.cancelar', atendimento_id=chamado['id']) }}" data-confirm="Cancelar esta senha?">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="button danger-ghost" type="submit">Cancelar</button>
+    </form>
+  </div>
+</section>
+{% endif %}
+
+<section class="panel">
+  <div class="section-heading">
+    <div><span class="eyebrow">Ordem de chegada</span><h2>Próximos atendimentos</h2></div>
+    <a class="button small secondary" href="{{ url_for('atendente.painel') }}">Atualizar fila</a>
+  </div>
+  <div class="queue-table">
+    {% for item in fila %}
+      <article class="queue-row {{ item['status']|lower }}">
+        <div class="queue-ticket"><strong>{{ item['senha'] }}</strong><small>{{ item['protocolo'] }}</small></div>
+        <div><strong>{{ item['servico_nome'] }}</strong><small>Chegada {{ item['criado_em']|hora }} · espera {{ item['criado_em']|minutos_desde }} min</small></div>
+        <div><span class="status-chip {{ item['status']|lower }}">{{ status_rotulos[item['status']] }}</span>{% if item['atendente_nome'] %}<small>{{ item['atendente_nome'] }}</small>{% endif %}</div>
+        <div class="queue-buttons">
+          {% if item['status'] == 'AGUARDANDO' %}
+            {% if not item['atendente_id'] or item['atendente_id'] == usuario_atual.id or usuario_atual.perfil == 'ADMIN' %}
+              {% if not item['chamado_em'] %}
+              <form method="post" action="{{ url_for('atendente.chamar', atendimento_id=item['id']) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button small secondary" type="submit">Chamar</button></form>
+              {% endif %}
+              <form method="post" action="{{ url_for('atendente.iniciar', atendimento_id=item['id']) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button small primary" type="submit">Iniciar</button></form>
+              <form method="post" action="{{ url_for('atendente.cancelar', atendimento_id=item['id']) }}" data-confirm="Cancelar esta senha?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button small danger-ghost" type="submit">Cancelar</button></form>
+            {% endif %}
+          {% elif item['atendente_id'] == usuario_atual.id or usuario_atual.perfil == 'ADMIN' %}
+            <form method="post" action="{{ url_for('atendente.concluir', atendimento_id=item['id']) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button small primary" type="submit">Concluir</button></form>
+          {% endif %}
+        </div>
+      </article>
+    {% else %}
+      <div class="empty-state"><strong>Fila vazia</strong><span>Nenhuma senha aguarda atendimento neste momento.</span></div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

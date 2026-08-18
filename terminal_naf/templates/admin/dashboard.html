@@ -1,0 +1,118 @@
+{% extends "base_admin.html" %}
+{% block title %}Dashboard — Terminal NAF{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block content %}
+{% set emitidas = indicadores.totais['emitidas'] or 0 %}
+{% set concluidos = indicadores.totais['concluidos'] or 0 %}
+{% set taxa_conclusao = (concluidos / emitidas * 100) if emitidas else 0 %}
+{% set media = indicadores.avaliacoes['media'] %}
+
+<section class="dashboard-topline">
+  <div>
+    <span class="eyebrow">Leitura da operação</span>
+    <h2>Atendimento em perspectiva</h2>
+    <p>Da emissão da senha à conclusão, sem misturar demanda com atendimento realizado.</p>
+  </div>
+  <form class="filter-bar dashboard-filters" method="get">
+    <div class="filter-pills">
+      {% for valor, nome in [('hoje', 'Hoje'), ('7dias', '7 dias'), ('mes', 'Mês atual'), ('total', 'Total geral')] %}
+        <button type="submit" name="periodo" value="{{ valor }}" class="{{ 'active' if indicadores.periodo == valor }}">{{ nome }}</button>
+      {% endfor %}
+    </div>
+    <details class="period-details" {{ 'open' if indicadores.periodo == 'personalizado' }}>
+      <summary>Período personalizado</summary>
+      <div class="custom-filter">
+        <input type="hidden" name="periodo" value="personalizado">
+        <label>De <input type="date" name="inicio" value="{{ indicadores.inicio or '' }}" required></label>
+        <label>Até <input type="date" name="fim" value="{{ indicadores.fim or '' }}" required></label>
+        <button class="button small secondary" type="submit">Aplicar</button>
+      </div>
+    </details>
+  </form>
+</section>
+
+<section class="operations-board">
+  <article class="operation-headline">
+    <span class="board-period">{{ indicadores.rotulo }}</span>
+    <div class="headline-number"><strong>{{ concluidos }}</strong><span>concluídos</span></div>
+    <div class="completion-rate">
+      <span><i style="width: {{ taxa_conclusao }}%"></i></span>
+      <small>{{ '%.0f'|format(taxa_conclusao) }}% das senhas emitidas chegaram à conclusão</small>
+    </div>
+    <span class="board-seal" aria-hidden="true">NAF<br><small>OPERAÇÃO</small></span>
+  </article>
+
+  <div class="operation-flow" aria-label="Fluxo dos atendimentos no período">
+    <div class="flow-heading"><span>Fluxo do período</span><small>Atualizado com os registros do sistema</small></div>
+    <div class="flow-stages">
+      <article>
+        <span class="flow-index">01</span>
+        <strong>{{ emitidas }}</strong>
+        <div><b>Senhas emitidas</b><small>Demanda recebida</small></div>
+      </article>
+      <span class="flow-arrow" aria-hidden="true">→</span>
+      <article class="waiting">
+        <span class="flow-index">02</span>
+        <strong>{{ indicadores.totais['aguardando'] or 0 }}</strong>
+        <div><b>Aguardando</b><small>Na fila do período</small></div>
+      </article>
+      <span class="flow-arrow" aria-hidden="true">→</span>
+      <article class="serving">
+        <span class="flow-index">03</span>
+        <strong>{{ indicadores.totais['em_atendimento'] or 0 }}</strong>
+        <div><b>Em atendimento</b><small>Em andamento</small></div>
+      </article>
+      <span class="flow-arrow" aria-hidden="true">→</span>
+      <article class="done">
+        <span class="flow-index">04</span>
+        <strong>{{ concluidos }}</strong>
+        <div><b>Concluídos</b><small>Realizados</small></div>
+      </article>
+    </div>
+    <div class="cancelled-line">
+      <span>Cancelados</span><strong>{{ indicadores.totais['cancelados'] or 0 }}</strong><small>não entram como atendimento realizado</small>
+    </div>
+  </div>
+</section>
+
+<section class="dashboard-analysis">
+  <article class="service-ledger">
+    <header>
+      <div><span class="eyebrow">Distribuição</span><h2>Concluídos por serviço</h2></div>
+      <span class="ledger-total">{{ concluidos }} <small>no período</small></span>
+    </header>
+    <div class="ledger-rule" aria-hidden="true"><span>Serviço</span><span>Participação</span><span>Total</span></div>
+    {% set maior = indicadores.por_servico[0]['quantidade'] if indicadores.por_servico else 0 %}
+    <div class="ledger-rows">
+      {% for item in indicadores.por_servico %}
+        <div class="ledger-entry">
+          <span><i>{{ '%02d'|format(loop.index) }}</i>{{ item['nome'] }}</span>
+          <div><b style="width: {{ (item['quantidade'] / maior * 100) if maior else 0 }}%"></b></div>
+          <strong>{{ item['quantidade'] }}</strong>
+        </div>
+      {% else %}
+        <div class="ledger-empty"><span>—</span><p>Nenhum atendimento concluído neste período.</p></div>
+      {% endfor %}
+    </div>
+  </article>
+
+  <div class="dashboard-side-notes">
+    <article class="quality-note" style="--score: {{ (media / 5 * 100) if media is not none else 0 }}%">
+      <div class="note-heading"><span class="eyebrow">Experiência</span><span class="note-tag">AVALIAÇÕES</span></div>
+      <div class="score-seal">
+        <div><strong>{{ '%.1f'|format(media) if media is not none else '—' }}</strong><small>de 5</small></div>
+      </div>
+      <h2>Percepção do cidadão</h2>
+      <p>Base: {{ indicadores.avaliacoes['quantidade'] }} avaliação(ões) registrada(s).</p>
+    </article>
+
+    <article class="time-note">
+      <div class="note-heading"><span class="eyebrow">Ritmo da operação</span><span class="note-tag">MINUTOS</span></div>
+      <div class="time-readings">
+        <div><small>Espera média</small><strong>{{ indicadores.totais['espera_media']|round(0)|int if indicadores.totais['espera_media'] is not none else '—' }}<i>min</i></strong><span>chegada → início</span></div>
+        <div><small>Atendimento médio</small><strong>{{ indicadores.totais['atendimento_medio']|round(0)|int if indicadores.totais['atendimento_medio'] is not none else '—' }}<i>min</i></strong><span>início → conclusão</span></div>
+      </div>
+    </article>
+  </div>
+</section>
+{% endblock %}

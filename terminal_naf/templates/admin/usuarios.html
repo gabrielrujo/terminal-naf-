@@ -1,0 +1,26 @@
+{% extends "base_admin.html" %}
+{% block title %}Usuários — Terminal NAF{% endblock %}
+{% block page_title %}Usuários{% endblock %}
+{% block content %}
+<div class="admin-columns">
+  <section class="panel form-panel">
+    <span class="eyebrow">Novo acesso</span><h2>Cadastrar usuário</h2>
+    <form class="stack-form" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label>Nome completo<input name="nome" required autocomplete="name"></label>
+      <label>Usuário<input name="usuario" required autocomplete="off"></label>
+      <label>Senha inicial<input name="senha" type="password" minlength="8" required autocomplete="new-password"></label>
+      <label>Perfil<select name="perfil"><option value="ATENDENTE">Atendente</option><option value="ADMIN">Administrador</option></select></label>
+      <button class="button primary" type="submit">Cadastrar usuário</button>
+    </form>
+  </section>
+  <section class="panel grow-panel">
+    <div class="section-heading"><div><span class="eyebrow">Equipe</span><h2>Usuários cadastrados</h2></div></div>
+    <div class="management-list">
+      {% for item in usuarios %}
+      <article><div class="avatar">{{ item['nome'][0]|upper }}</div><div><strong>{{ item['nome'] }}</strong><small>@{{ item['login'] }} · {{ 'Administrador' if item['perfil'] == 'ADMIN' else 'Atendente' }}</small></div><span class="active-label {{ 'on' if item['ativo'] else 'off' }}">{{ 'Ativo' if item['ativo'] else 'Inativo' }}</span><form method="post" action="{{ url_for('admin.usuario_alternar', usuario_id=item['id']) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button small secondary" type="submit" {% if item['id'] == usuario_atual.id %}disabled{% endif %}>{{ 'Desativar' if item['ativo'] else 'Ativar' }}</button></form></article>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}

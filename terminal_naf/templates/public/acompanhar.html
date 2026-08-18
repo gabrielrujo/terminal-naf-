@@ -1,0 +1,20 @@
+{% extends "base_public.html" %}
+{% block title %}Acompanhar protocolo — Terminal NAF{% endblock %}
+{% block content %}
+<div class="page-intro centered">
+  <span class="eyebrow">Consulta pública</span>
+  <h1>Acompanhe seu atendimento</h1>
+  <p>Digite o protocolo completo recebido na emissão da senha.</p>
+</div>
+
+<form class="lookup-card" method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label for="protocolo">Protocolo</label>
+  <input id="protocolo" name="protocolo" placeholder="NAF-20260818-0001" autocomplete="off" required>
+  <button class="button primary" type="submit">Consultar atendimento</button>
+</form>
+
+<div class="public-actions centered-actions">
+  <a class="button secondary" href="{{ url_for('public.index') }}">← Voltar ao início</a>
+</div>
+{% endblock %}

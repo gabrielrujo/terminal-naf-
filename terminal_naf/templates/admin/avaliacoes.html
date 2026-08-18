@@ -1,0 +1,12 @@
+{% extends "base_admin.html" %}
+{% block title %}Avaliações — Terminal NAF{% endblock %}
+{% block page_title %}Avaliações{% endblock %}
+{% block content %}
+<section class="panel">
+  <div class="section-heading"><div><span class="eyebrow">Voz do cidadão</span><h2>Avaliações registradas</h2></div><span class="record-count">{{ avaliacoes|length }} registro(s)</span></div>
+  <div class="data-table-wrap"><table class="data-table"><thead><tr><th>Senha</th><th>Protocolo</th><th>Serviço</th><th>Nota</th><th>Data</th></tr></thead><tbody>
+    {% for item in avaliacoes %}<tr><td><strong>{{ item['senha'] }}</strong></td><td>{{ item['protocolo'] }}</td><td>{{ item['servico_nome'] }}</td><td><span class="rating-badge">{{ item['nota'] }}/5</span></td><td>{{ item['criado_em']|data_hora }}</td></tr>
+    {% else %}<tr><td colspan="5"><div class="empty-state">Nenhuma avaliação registrada.</div></td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{% endblock %}

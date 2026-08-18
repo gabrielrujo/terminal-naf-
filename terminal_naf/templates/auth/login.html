@@ -1,0 +1,21 @@
+{% extends "base_public.html" %}
+{% block title %}Acesso da equipe — Terminal NAF{% endblock %}
+{% block content %}
+<div class="login-layout">
+  <section class="login-copy">
+    <span class="eyebrow">Área restrita</span>
+    <h1>Acesso da equipe NAF</h1>
+    <p>Entre para acompanhar a fila e administrar os atendimentos.</p>
+    <a href="{{ url_for('public.index') }}">← Voltar ao terminal público</a>
+  </section>
+  <form class="login-card" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="usuario">Usuário</label>
+    <input id="usuario" name="usuario" autocomplete="username" required autofocus>
+    <label for="senha">Senha</label>
+    <input id="senha" name="senha" type="password" autocomplete="current-password" required>
+    <button class="button primary" type="submit">Entrar</button>
+    <small>O acesso é exclusivo para atendentes e coordenação.</small>
+  </form>
+</div>
+{% endblock %}

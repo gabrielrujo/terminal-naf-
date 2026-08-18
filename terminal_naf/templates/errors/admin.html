@@ -1,0 +1,5 @@
+{% extends "base_admin.html" %}
+{% block page_title %}{{ titulo }}{% endblock %}
+{% block content %}
+<section class="panel error-state"><strong>{{ codigo }}</strong><h2>{{ titulo }}</h2><p>{{ mensagem }}</p><a class="button primary" href="{{ url_for('atendente.painel') }}">Voltar à fila</a></section>
+{% endblock %}

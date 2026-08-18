@@ -1,225 +1,336 @@
-# Terminal NAF
+# Terminal NAF V2
 
-Aplicação web para triagem e acompanhamento de atendimentos do Núcleo de Apoio
-Contábil e Fiscal (NAF). O projeto foi desenhado como um protótipo para rodar em
-um Orange Pi 5 com uma tela touch em modo kiosk, mas também pode ser executado em
-qualquer computador com Python.
+Sistema de triagem, fila e acompanhamento de atendimentos do NAF — Núcleo de
+Apoio Contábil e Fiscal. A V2 foi preparada para demonstrações com coordenadores
+e para futura execução em um Orange Pi ou Raspberry Pi com Chromium em modo
+kiosk.
 
-## Estado atual
+O projeto possui duas experiências independentes:
 
-O fluxo principal está funcional de ponta a ponta:
+- **terminal público:** triagem, emissão de senha, acompanhamento do protocolo e
+  avaliação pelo cidadão;
+- **área interna:** login, fila operacional, painel do atendente, dashboard e
+  cadastros administrativos.
+
+## Estado da V2
+
+O cenário principal está implementado e validado:
 
 ```text
-Cidadão escolhe um serviço
-        ↓
-Senha criada como "aguardando"
-        ↓
-Atendente inicia o atendimento
-        ↓
-Status muda para "em_atendimento"
-        ↓
-Atendente responsável ou coordenação conclui
-        ↓
-Status muda para "concluido" e a avaliação é liberada
+selecionar serviço
+      ↓
+confirmar seleção
+      ↓
+AGUARDANDO
+      ↓
+EM_ATENDIMENTO
+      ↓
+CONCLUIDO
+      ↓
+avaliação pública pelo protocolo
 ```
 
-A emissão de uma senha não é contabilizada como atendimento concluído. Os
-indicadores separam senhas emitidas, pessoas aguardando, atendimentos em curso e
-atendimentos concluídos.
+Um atendimento também pode passar de `AGUARDANDO` ou `EM_ATENDIMENTO` para
+`CANCELADO`. Estados finais não retornam ao fluxo normal.
 
-### Perfis
+A senha emitida nunca é tratada como atendimento realizado. Dashboard e banco
+diferenciam senhas emitidas, aguardando, em atendimento, concluídas e canceladas.
 
-- **Cidadão:** consulta os serviços e materiais, escolhe um serviço e recebe um
-  protocolo no formato `NAF-AAAAMMDD-0000`.
-- **Atendente:** acessa a fila, inicia uma senha e conclui os próprios
-  atendimentos.
-- **Coordenador:** possui as funções do atendente e também acessa os indicadores,
-  conclui qualquer atendimento e gerencia usuários.
+## Funcionalidades
 
-### Funcionalidades implementadas
+### Cidadão
 
-- primeiro acesso com criação obrigatória de uma conta de coordenação;
-- autenticação por sessão e senhas armazenadas com hash do Werkzeug;
-- cadastro de atendentes e coordenadores, com ativação e desativação de contas;
-- fila ordenada, priorizando atendimentos já iniciados;
-- registro do responsável e dos horários de criação, início e conclusão;
-- avaliação única de 1 a 5, aceita apenas após a conclusão;
-- dashboard com totais, conclusão por serviço, taxa de resolução e nota média;
-- endpoint JSON protegido em `GET /api/stats`;
-- retorno automático à página inicial após 60 segundos sem interação nas telas
-  públicas;
-- criação automática do banco e migração básica do esquema da primeira versão;
-- testes automatizados para o ciclo do atendimento e a proteção do dashboard.
+- consulta serviços e materiais sem login;
+- escolhe e confirma o serviço antes da criação do atendimento;
+- recebe uma senha sequencial amigável, como `A001`;
+- recebe um protocolo único, como `NAF-20260818-0001`;
+- acompanha o status por uma página que consulta o servidor automaticamente;
+- avalia de 1 a 5 somente depois da conclusão;
+- não consegue avaliar protocolo inexistente, não concluído ou já avaliado;
+- retorna ao início após 60 segundos sem interação nas páginas públicas.
 
-## Tecnologias e organização
+### Atendente
 
-- **Backend:** Python, Flask e Werkzeug.
-- **Persistência:** SQLite no arquivo local `naf_terminal.db`.
-- **Frontend:** templates Jinja, HTML, CSS e JavaScript sem etapa de build.
-- **Testes:** `unittest` e cliente de testes do Flask.
+- acessa o painel próprio em `/atendente`;
+- visualiza resumo, fila por ordem de chegada e atendimento atual;
+- chama, inicia, conclui ou cancela conforme o estado permitido;
+- visualiza o histórico dos próprios atendimentos;
+- não pode concluir uma senha que nunca foi iniciada;
+- não pode assumir/cancelar um atendimento atribuído a outro atendente;
+- não é redirecionado para a avaliação do cidadão.
 
-O arquivo `app.py` concentra a configuração, o acesso ao banco, a autenticação e
-as rotas. Os dados de serviços e materiais ainda são listas fixas nesse arquivo.
-As páginas ficam em `templates/`; o estilo e o comportamento do kiosk ficam em
-`static/`.
+### Administrador
 
-O banco possui três tabelas:
+- acessa o dashboard em `/admin`;
+- filtra indicadores por hoje, últimos 7 dias, mês, total ou período
+  personalizado;
+- consulta senhas emitidas, estados, avaliações e tempos médios;
+- consulta atendimentos e avaliações;
+- cria, ativa e desativa usuários;
+- cria, ativa e desativa serviços;
+- pode acessar a fila operacional sem perder o layout interno.
 
-- `usuarios`: credenciais, perfil e situação da conta;
-- `atendimentos`: protocolo, serviço, estado, responsável e horários;
-- `avaliacoes`: nota vinculada ao protocolo, limitada a um registro por
-  protocolo.
+## Tecnologias
 
-## Requisitos
+- Python 3.11 ou superior;
+- Flask 3;
+- SQLite com chaves estrangeiras e restrições no schema;
+- Jinja, CSS e JavaScript locais, sem framework ou CDN;
+- `unittest` para testes automatizados.
 
-- Python 3;
-- `pip`;
-- navegador moderno; Chromium é indicado para o modo kiosk.
+A V2 usa diretamente a biblioteca `sqlite3` do Python. Isso mantém a instalação
+leve e sem dependências de banco adicionais, importante para hardware compacto e
+operação sem internet.
 
-## Instalação e execução local
+## Arquitetura
+
+```text
+terminal-naf/
+├── terminal_naf/
+│   ├── __init__.py              # application factory
+│   ├── config.py                # configuração por ambiente
+│   ├── database.py              # conexão e inicialização SQLite
+│   ├── schema.sql               # tabelas, relações e índices
+│   ├── models.py                # perfis, estados e erros de domínio
+│   ├── security.py              # sessão, autorização e CSRF
+│   ├── cli.py                   # seed e reset de demonstração
+│   ├── routes/
+│   │   ├── public.py            # terminal e avaliação
+│   │   ├── auth.py              # login e logout
+│   │   ├── atendente.py         # fila e ações operacionais
+│   │   └── admin.py             # dashboard e cadastros
+│   ├── services/
+│   │   ├── atendimentos.py      # transições e geração de protocolo
+│   │   ├── catalogo.py          # serviços e materiais iniciais
+│   │   ├── indicadores.py       # métricas e filtros
+│   │   └── usuarios.py          # contas e autenticação
+│   ├── templates/
+│   │   ├── public/
+│   │   ├── auth/
+│   │   ├── atendente/
+│   │   ├── admin/
+│   │   ├── components/
+│   │   └── errors/
+│   └── static/
+│       ├── css/app.css
+│       └── js/app.js
+├── instance/                    # banco V2 local, ignorado pelo Git
+├── backups/                     # backups locais, ignorados pelo Git
+├── tests/
+│   ├── test_fluxo.py            # testes preservados da V1
+│   └── test_v2_fluxo.py         # regras críticas da V2
+├── run.py                       # execução da V2
+├── app.py                       # aplicação V1 preservada
+├── requirements.txt
+└── README.md
+```
+
+### Banco de dados
+
+O banco V2 fica em `instance/terminal_naf_v2.db` e é criado automaticamente. Ele
+não substitui o banco antigo `naf_terminal.db`.
+
+Entidades:
+
+- `usuarios`: funcionários e coordenadores, nunca cidadãos;
+- `servicos`: catálogo utilizado pela triagem pública;
+- `atendimentos`: senha, protocolo, serviço, estado, responsável e horários;
+- `avaliacoes`: uma nota por atendimento concluído;
+- `sequencias`: numeração diária das senhas sem sorteio aleatório.
+
+Não são armazenados CPF, renda, endereço, documentos ou outros dados pessoais do
+cidadão.
+
+## Instalação
+
+Na raiz do repositório:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
-export NAF_SECRET_KEY="defina-uma-chave-longa-e-aleatoria"
-python app.py
 ```
 
-A aplicação ficará disponível em `http://localhost:5001` e aceitará conexões da
-rede local porque o servidor escuta em `0.0.0.0`.
+Defina uma chave de sessão própria:
 
-`NAF_SECRET_KEY` protege a sessão da equipe. Se a variável não for definida, o
-sistema usa uma chave conhecida de desenvolvimento; isso é aceitável somente
-para testes locais.
+```bash
+export NAF_SECRET_KEY="troque-por-uma-chave-longa-e-aleatoria"
+```
 
-O arquivo `naf_terminal.db` é criado automaticamente na raiz do projeto e está
-ignorado pelo Git. Para reiniciar totalmente os dados durante o desenvolvimento,
-pare a aplicação e remova esse arquivo sabendo que usuários, atendimentos e
-avaliações serão perdidos.
+Sem essa variável, a aplicação utiliza uma chave conhecida apenas para
+desenvolvimento local.
 
-### Primeiro acesso
+## Dados de demonstração
 
-1. Abra `http://localhost:5001/login` ou clique em **Acesso da equipe**.
-2. Como ainda não existem usuários, o sistema abrirá a configuração inicial.
-3. Cadastre a primeira conta; ela terá o perfil de coordenador.
-4. Use **Usuários** para cadastrar os atendentes.
+Prepare os serviços e usuários com:
 
-Não existe usuário ou senha padrão.
+```bash
+flask --app run.py seed-demo
+```
 
-## Como validar o fluxo
+Contas locais padrão:
 
-O ideal é usar duas janelas ou dispositivos: uma janela anônima representa o
-terminal do cidadão e outra representa a equipe.
+| Perfil | Usuário | Senha de desenvolvimento |
+| --- | --- | --- |
+| Administrador | `admin` | `admin123` |
+| Atendente | `atendente` | `atendente123` |
 
-1. Entre como coordenador ou atendente na janela da equipe.
-2. Na janela do cidadão, escolha **Iniciar atendimento**, selecione o serviço e
-   anote o protocolo.
-3. Na área da equipe, abra **Fila** e clique em **Iniciar**.
-4. Conclua o atendimento com a mesma conta que o iniciou ou com uma conta de
-   coordenação.
-5. Registre uma nota na tela de avaliação.
-6. Como coordenador, confira os resultados no dashboard.
+Essas credenciais são exclusivas para demonstração. É possível trocar as senhas
+do seed sem alterar o código:
+
+```bash
+export NAF_DEMO_ADMIN_PASSWORD="outra-senha-segura"
+export NAF_DEMO_ATENDENTE_PASSWORD="outra-senha-segura"
+flask --app run.py seed-demo
+```
+
+Executar o seed novamente restaura as contas de demonstração, seus perfis e suas
+senhas configuradas.
+
+## Iniciar a V2
+
+```bash
+python run.py
+```
+
+Abra `http://localhost:5000`.
+
+- terminal público: `http://localhost:5000/`;
+- login da equipe: `http://localhost:5000/login`;
+- painel do atendente após login: `http://localhost:5000/atendente`;
+- dashboard administrativo após login: `http://localhost:5000/admin`.
+
+O modo debug fica desativado por padrão. Para desenvolvimento local explícito:
+
+```bash
+export NAF_DEBUG=1
+python run.py
+```
+
+## Demonstração completa
+
+Use duas janelas, de preferência deixando o terminal público em uma janela
+anônima.
+
+1. No terminal público, clique em **Iniciar atendimento**.
+2. Escolha **MEI**, revise a seleção e confirme.
+3. Anote a senha `A001` e mantenha a página do protocolo aberta.
+4. Em outra janela, entre com `atendente` / `atendente123`.
+5. Na fila, chame ou inicie a senha.
+6. Conclua o atendimento.
+7. Volte à página pública: o status mudará automaticamente para concluído.
+8. Clique em **Avaliar atendimento** e registre a nota 5.
+9. Tente abrir a avaliação novamente para verificar o bloqueio de duplicidade.
+10. Entre com `admin` / `admin123` e abra o dashboard em **Total geral**.
+
+O resultado esperado é uma senha emitida, um atendimento concluído, média 5,0 e
+MEI com uma conclusão.
+
+## Reset da demonstração
+
+O reset cria um backup do banco antes de remover dados:
+
+```bash
+flask --app run.py reset-demo
+```
+
+Para automação sem confirmação interativa:
+
+```bash
+flask --app run.py reset-demo --yes
+```
+
+O comando remove somente atendimentos, avaliações e sequências. Usuários e
+serviços são preservados. O caminho do backup é exibido no terminal e os arquivos
+ficam em `backups/`.
+
+Não existe botão público para apagar dados.
 
 ## Testes
-
-Com o ambiente virtual ativo, execute:
 
 ```bash
 python -m unittest discover -s tests -v
 ```
 
-Os testes usam um banco SQLite temporário e não alteram o banco local da
-aplicação.
+Os testes da V2 cobrem:
 
-## Rotas principais
+- confirmação de serviço sem criação prematura;
+- estado inicial `AGUARDANDO`;
+- numeração sequencial;
+- transição para `EM_ATENDIMENTO` com responsável e horário;
+- proibição de `AGUARDANDO → CONCLUIDO`;
+- cancelamento;
+- avaliação apenas após conclusão;
+- avaliação única;
+- bloqueio de avaliação por uma sessão da equipe;
+- autenticação e separação de perfis;
+- indicadores administrativos;
+- proteção CSRF.
 
-| Método | Rota | Acesso | Finalidade |
-| --- | --- | --- | --- |
-| `GET` | `/` | Público | Página inicial |
-| `GET/POST` | `/atendimento` | Público | Seleção do serviço e emissão da senha |
-| `GET` | `/confirmacao/<protocolo>` | Público | Confirmação da senha |
-| `GET` | `/informacoes` | Público | Lista dos serviços |
-| `GET` | `/materiais` | Público | Lista dos materiais educativos |
-| `GET/POST` | `/avaliacao/<protocolo>` | Público após conclusão | Registro da avaliação |
-| `GET/POST` | `/configuracao-inicial` | Público enquanto não há usuários | Criação do primeiro coordenador |
-| `GET/POST` | `/login` | Público | Login da equipe |
-| `POST` | `/logout` | Equipe | Encerramento da sessão |
-| `GET` | `/fila` | Equipe | Fila de senhas ativas |
-| `POST` | `/atendimentos/<id>/iniciar` | Equipe | Início do atendimento |
-| `POST` | `/atendimentos/<id>/concluir` | Responsável ou coordenação | Conclusão do atendimento |
-| `GET` | `/dashboard` | Coordenação | Indicadores consolidados |
-| `GET/POST` | `/usuarios` | Coordenação | Consulta e cadastro de usuários |
-| `POST` | `/usuarios/<id>/alternar` | Coordenação | Ativação ou desativação de usuário |
-| `GET` | `/api/stats` | Coordenação | Quantidade de concluídos por serviço em JSON |
+Cada teste utiliza um banco temporário e não altera os dados da demonstração.
 
-## Estrutura do projeto
+## Configuração por ambiente
 
-```text
-terminal-naf/
-├── app.py
-├── requirements.txt
-├── README.md
-├── static/
-│   ├── script.js
-│   └── style.css
-├── templates/
-│   ├── atendimento.html
-│   ├── avaliacao.html
-│   ├── base.html
-│   ├── configuracao_inicial.html
-│   ├── confirmacao.html
-│   ├── dashboard.html
-│   ├── fila.html
-│   ├── index.html
-│   ├── informacoes.html
-│   ├── login.html
-│   ├── materiais.html
-│   └── usuarios.html
-└── tests/
-    └── test_fluxo.py
-```
+| Variável | Padrão | Finalidade |
+| --- | --- | --- |
+| `NAF_SECRET_KEY` | chave apenas de desenvolvimento | Assinatura segura da sessão |
+| `NAF_DATABASE` | `instance/terminal_naf_v2.db` | Caminho do banco V2 |
+| `NAF_BACKUP_DIR` | `backups/` | Destino dos backups de reset |
+| `NAF_HOST` | `0.0.0.0` | Interface de rede |
+| `NAF_PORT` | `5000` | Porta HTTP |
+| `NAF_DEBUG` | `0` | Ativa debug somente quando igual a `1` |
+| `NAF_COOKIE_SECURE` | `0` | Exige HTTPS no cookie quando igual a `1` |
+| `NAF_DEMO_ADMIN_PASSWORD` | `admin123` | Senha local criada pelo seed |
+| `NAF_DEMO_ATENDENTE_PASSWORD` | `atendente123` | Senha local criada pelo seed |
 
-## Uso no Orange Pi
+## Orange Pi / Raspberry Pi
 
-Depois de iniciar a aplicação, abra o Chromium em tela cheia. O nome do
-executável pode ser `chromium` ou `chromium-browser`, conforme a distribuição:
+O frontend não depende de Google Fonts, CDN ou internet. Depois de iniciar o
+servidor, o terminal pode abrir o Chromium em modo kiosk:
 
 ```bash
-chromium --kiosk --noerrdialogs --disable-infobars http://localhost:5001
+chromium --kiosk --noerrdialogs --disable-infobars http://localhost:5000
 ```
 
-As fontes visuais são carregadas do Google Fonts pelo CSS. Em uma instalação sem
-internet estável, elas devem ser baixadas para `static/fonts/` e referenciadas
-localmente.
+O executável pode se chamar `chromium-browser`, conforme a distribuição Linux.
+Para implantação permanente, configure um serviço `systemd` com usuário sem
+privilégios e um servidor WSGI em vez do servidor de desenvolvimento do Flask.
 
-## Limitações antes de produção
+## Segurança aplicada
 
-O projeto está adequado para demonstração e validação do fluxo, mas ainda não
-está pronto para exposição direta na internet:
+- senha armazenada somente como hash do Werkzeug;
+- autenticação por sessão com cookie `HttpOnly` e `SameSite=Lax`;
+- proteção CSRF em operações de escrita;
+- autorização server-side para atendente e administrador;
+- validação das transições de estado no servidor;
+- restrições de integridade e unicidade também no SQLite;
+- páginas amigáveis para erros 400, 403, 404 e 500;
+- debug desativado por padrão.
 
-- `python app.py` inicia o servidor de desenvolvimento do Flask com o modo debug
-  habilitado; uma implantação real precisa de servidor WSGI e debug desativado;
-- os formulários não possuem proteção CSRF e o login não tem limitação de
-  tentativas;
-- a chave de sessão padrão deve ser substituída por `NAF_SECRET_KEY`;
-- a conclusão redireciona o navegador usado pela equipe para a avaliação; em uma
-  operação com telas separadas, ainda falta sincronizar ou abrir a avaliação no
-  terminal do cidadão;
-- o dashboard consolida todo o histórico, sem filtro por período ou unidade;
-- os materiais educativos exibem somente títulos, sem arquivo, link ou conteúdo;
-- não há rotina automatizada de backup, recuperação ou exportação do SQLite;
-- os testes atuais cobrem o caminho principal, mas não toda a autenticação, as
-  permissões, as migrações e os cenários de concorrência.
+Em produção, ainda é necessário usar HTTPS, `NAF_COOKIE_SECURE=1`, uma chave de
+sessão secreta, servidor WSGI, política de backup externo e limitação de
+tentativas no login.
 
-## Próximos passos sugeridos
+## V1 preservada
 
-1. Separar a experiência do terminal público da estação da equipe e sincronizar
-   a liberação da avaliação.
-2. Preparar a execução de produção, com configuração externa, WSGI, CSRF,
-   cookies seguros e limitação de tentativas de login.
-3. Adicionar filtros por data e exportação de relatórios no dashboard.
-4. Transformar serviços e materiais em conteúdo administrável.
-5. Ampliar os testes de autenticação, autorização, migração e concorrência.
-6. Adicionar uma triagem assistida para quem não sabe qual serviço escolher,
-   sempre pedindo confirmação e encaminhando casos incertos para **Outros**.
+A V1 está preservada no commit `5e52830` da branch `main` e a reconstrução foi
+feita em paralelo. Os arquivos antigos não foram removidos.
+
+- aplicação V1: `app.py`, `templates/` e `static/`;
+- banco V1: `naf_terminal.db`;
+- backup validado antes da reconstrução:
+  `backups/naf_terminal.backup-pre-v2-20260817.db`;
+- aplicação V2: `run.py` e pacote `terminal_naf/`;
+- banco V2: `instance/terminal_naf_v2.db`.
+
+Para executar a V1 preservada, use `python app.py`; ela continua na porta 5001.
+
+## Pendências não críticas
+
+- troca de senha pela própria interface;
+- exportação de relatórios em CSV/PDF;
+- edição de serviços já cadastrados, além de ativação/desativação;
+- conteúdo completo ou arquivos para os materiais educativos;
+- migrações versionadas para evoluções futuras do schema;
+- deploy WSGI/systemd pronto para produção;
+- assistente virtual, propositalmente fora do escopo desta entrega.

@@ -1,0 +1,81 @@
+{% extends "base_public.html" %}
+{% block content %}
+<section class="home-stage">
+  <div class="home-intro">
+    <div class="home-kicker">
+      <span class="open-dot" aria-hidden="true"></span>
+      <span>Terminal de atendimento disponível</span>
+    </div>
+    <h1>Como podemos<br>ajudar <em>você</em> hoje?</h1>
+    <p>Orientação contábil e fiscal gratuita, com um caminho simples do protocolo ao atendimento.</p>
+
+    <a class="home-primary-action" href="{{ url_for('public.atendimento') }}">
+      <span class="home-action-number">01</span>
+      <span class="home-action-copy">
+        <small>Comece por aqui</small>
+        <strong>Iniciar atendimento</strong>
+        <span>Escolha o serviço e retire sua senha.</span>
+      </span>
+      <span class="home-action-arrow" aria-hidden="true">↗</span>
+    </a>
+
+    <div class="home-assurance" aria-label="Informações sobre o atendimento">
+      <span><i aria-hidden="true">✓</i> Atendimento gratuito</span>
+      <span><i aria-hidden="true">✓</i> Sem cadastro pessoal</span>
+      <span><i aria-hidden="true">✓</i> Acompanhamento por protocolo</span>
+    </div>
+  </div>
+
+  <aside class="home-ticket-preview" aria-label="Exemplo de uma senha do Terminal NAF">
+    <div class="preview-topline"><span>NAF</span><span>SENHA DE ATENDIMENTO</span></div>
+    <div class="preview-counter"><small>EXEMPLO</small><strong>A001</strong></div>
+    <div class="preview-tear" aria-hidden="true"></div>
+    <div class="preview-service"><span>Serviço</span><strong>Orientação fiscal</strong></div>
+    <ol class="preview-steps">
+      <li class="active"><span>1</span><div><strong>Escolha</strong><small>Selecione o serviço</small></div></li>
+      <li><span>2</span><div><strong>Aguarde</strong><small>Acompanhe sua senha</small></div></li>
+      <li><span>3</span><div><strong>Avalie</strong><small>Conte como foi</small></div></li>
+    </ol>
+    <div class="preview-stamp">Atendimento<br>NAF</div>
+  </aside>
+</section>
+
+<section class="home-utilities" aria-labelledby="outras-opcoes">
+  <div class="home-section-label">
+    <span id="outras-opcoes">Outras opções</span>
+    <i aria-hidden="true"></i>
+  </div>
+  <nav class="home-utility-grid" aria-label="Outras opções do terminal">
+    <a class="home-utility featured" href="{{ url_for('public.acompanhar') }}">
+      <span class="utility-index">02</span>
+      <span class="utility-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM8 9h8M8 13h5"/></svg>
+      </span>
+      <span><strong>Acompanhar protocolo</strong><small>Veja se sua senha está aguardando, em atendimento ou concluída.</small></span>
+      <b aria-hidden="true">→</b>
+    </a>
+    <a class="home-utility" href="{{ url_for('public.informacoes') }}">
+      <span class="utility-index">03</span>
+      <span class="utility-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></svg>
+      </span>
+      <span><strong>Informações e serviços</strong><small>Conheça a atuação do NAF.</small></span>
+      <b aria-hidden="true">→</b>
+    </a>
+    <a class="home-utility" href="{{ url_for('public.materiais') }}">
+      <span class="utility-index">04</span>
+      <span class="utility-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM8 16h11"/></svg>
+      </span>
+      <span><strong>Materiais educativos</strong><small>Consulte guias e orientações.</small></span>
+      <b aria-hidden="true">→</b>
+    </a>
+  </nav>
+</section>
+
+<a class="home-restricted" href="{{ url_for('auth.login') }}">
+  <span class="restricted-lock" aria-hidden="true">↳</span>
+  <span><strong>Área administrativa</strong><small>Acesso restrito à equipe do NAF</small></span>
+  <span aria-hidden="true">Entrar →</span>
+</a>
+{% endblock %}

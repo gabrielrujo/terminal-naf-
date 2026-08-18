@@ -1,0 +1,9 @@
+{% extends "base_admin.html" %}
+{% block title %}Atendimentos — Terminal NAF{% endblock %}
+{% block page_title %}Atendimentos{% endblock %}
+{% block content %}
+<section class="panel">
+  <div class="section-heading"><div><span class="eyebrow">Auditoria operacional</span><h2>Histórico completo</h2></div><span class="record-count">{{ atendimentos|length }} registro(s)</span></div>
+  {% include "components/atendimentos_table.html" %}
+</section>
+{% endblock %}

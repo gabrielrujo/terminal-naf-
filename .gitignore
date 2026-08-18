@@ -4,4 +4,6 @@ __pycache__/
 *.pyc
 naf_terminal.db
 naf_terminal.backup-*.db
+instance/*.db
+backups/*.db
 .DS_Store

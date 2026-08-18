@@ -1,0 +1,20 @@
+<div class="data-table-wrap">
+  <table class="data-table">
+    <thead><tr><th>Senha</th><th>Serviço</th><th>Status</th><th>Responsável</th><th>Criado</th><th>Iniciado</th><th>Finalizado</th></tr></thead>
+    <tbody>
+      {% for item in atendimentos %}
+      <tr>
+        <td><strong>{{ item['senha'] }}</strong><small>{{ item['protocolo'] }}</small></td>
+        <td>{{ item['servico_nome'] }}</td>
+        <td><span class="status-chip {{ item['status']|lower }}">{{ status_rotulos[item['status']] }}</span></td>
+        <td>{{ item['atendente_nome'] or '—' }}</td>
+        <td>{{ item['criado_em']|data_hora }}</td>
+        <td>{{ item['iniciado_em']|data_hora }}</td>
+        <td>{{ (item['concluido_em'] or item['cancelado_em'])|data_hora }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7"><div class="empty-state">Nenhum atendimento encontrado.</div></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

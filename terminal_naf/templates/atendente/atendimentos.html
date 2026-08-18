@@ -1,0 +1,9 @@
+{% extends "base_admin.html" %}
+{% block title %}Meus atendimentos — Terminal NAF{% endblock %}
+{% block page_title %}Meus atendimentos{% endblock %}
+{% block content %}
+<section class="panel">
+  <div class="section-heading"><div><span class="eyebrow">Histórico</span><h2>Atendimentos sob sua responsabilidade</h2></div></div>
+  {% include "components/atendimentos_table.html" %}
+</section>
+{% endblock %}

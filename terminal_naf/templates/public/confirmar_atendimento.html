@@ -1,0 +1,23 @@
+{% extends "base_public.html" %}
+{% block title %}Confirmar serviço — Terminal NAF{% endblock %}
+{% block content %}
+<div class="page-intro centered">
+  <span class="step-label">Etapa 2 de 2</span>
+  <h1>Confirme sua escolha</h1>
+  <p>A senha será emitida somente após a confirmação.</p>
+</div>
+
+<section class="confirmation-card">
+  <span class="service-code large">{{ servico['codigo'] }}</span>
+  <div><small>Serviço selecionado</small><h2>{{ servico['nome'] }}</h2><p>{{ servico['descricao'] }}</p></div>
+</section>
+
+<div class="public-actions centered-actions">
+  <a class="button secondary" href="{{ url_for('public.atendimento') }}">← Alterar serviço</a>
+  <form method="post" action="{{ url_for('public.criar') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="servico_id" value="{{ servico['id'] }}">
+    <button class="button primary" type="submit">Confirmar e gerar senha</button>
+  </form>
+</div>
+{% endblock %}

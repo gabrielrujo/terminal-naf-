@@ -1,0 +1,25 @@
+{% extends "base_admin.html" %}
+{% block title %}Serviços — Terminal NAF{% endblock %}
+{% block page_title %}Serviços{% endblock %}
+{% block content %}
+<div class="admin-columns">
+  <section class="panel form-panel">
+    <span class="eyebrow">Catálogo</span><h2>Novo serviço</h2>
+    <form class="stack-form" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label>Código<input name="codigo" maxlength="12" placeholder="EX.: CNPJ" required></label>
+      <label>Nome<input name="nome" required></label>
+      <label>Descrição<textarea name="descricao" rows="4" required></textarea></label>
+      <button class="button primary" type="submit">Cadastrar serviço</button>
+    </form>
+  </section>
+  <section class="panel grow-panel">
+    <div class="section-heading"><div><span class="eyebrow">Triagem pública</span><h2>Serviços disponíveis</h2></div></div>
+    <div class="management-list services-management">
+      {% for item in servicos %}
+      <article><span class="service-code">{{ item['codigo'] }}</span><div><strong>{{ item['nome'] }}</strong><small>{{ item['descricao'] }}</small></div><span class="active-label {{ 'on' if item['ativo'] else 'off' }}">{{ 'Ativo' if item['ativo'] else 'Inativo' }}</span><form method="post" action="{{ url_for('admin.servico_alternar', servico_id=item['id']) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button small secondary" type="submit">{{ 'Desativar' if item['ativo'] else 'Ativar' }}</button></form></article>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}
