@@ -1,10 +1,32 @@
 """Experiência pública do terminal e avaliação do cidadão."""
 
-from flask import Blueprint, abort, flash, g, jsonify, redirect, render_template, request, url_for
+from flask import (
+    Blueprint,
+    abort,
+    flash,
+    g,
+    jsonify,
+    make_response,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
 
 from ..models import RegraDeNegocioError, StatusAtendimento
-from ..services.atendimentos import criar_atendimento, obter_por_protocolo, registrar_avaliacao
+from ..services.atendimentos import (
+    criar_atendimento_com_acesso,
+    obter_por_protocolo,
+    registrar_avaliacao,
+)
 from ..services.catalogo import MATERIAIS, listar_servicos
+from ..services.chat import (
+    enviar_mensagem,
+    listar_mensagens,
+    ultima_mensagem_lida,
+    validar_codigo_acesso,
+)
 
 
 bp = Blueprint("public", __name__)
@@ -20,6 +42,8 @@ def _servico_ativo(servico_id):
 
 @bp.get("/")
 def index():
+    session.pop("chat_atendimento_id", None)
+    session.pop("chat_codigo_exibicao", None)
     return render_template("public/index.html")
 
 
@@ -44,10 +68,12 @@ def criar():
         flash("O serviço selecionado não está disponível.", "erro")
         return redirect(url_for("public.atendimento"))
     try:
-        registro = criar_atendimento(servico["id"])
+        registro, codigo_chat = criar_atendimento_com_acesso(servico["id"])
     except RegraDeNegocioError as error:
         flash(str(error), "erro")
         return redirect(url_for("public.atendimento"))
+    session["chat_atendimento_id"] = registro["id"]
+    session["chat_codigo_exibicao"] = codigo_chat
     return redirect(url_for("public.protocolo", protocolo=registro["protocolo"]))
 
 
@@ -69,7 +95,82 @@ def protocolo(protocolo):
     registro = obter_por_protocolo(protocolo)
     if registro is None:
         abort(404)
-    return render_template("public/protocolo.html", atendimento=registro)
+    chat_autorizado = session.get("chat_atendimento_id") == registro["id"]
+    codigo_chat = (
+        session.get("chat_codigo_exibicao") if chat_autorizado else None
+    )
+    resposta = make_response(
+        render_template(
+            "public/protocolo.html",
+            atendimento=registro,
+            chat_autorizado=chat_autorizado,
+            codigo_chat=codigo_chat,
+        )
+    )
+    resposta.headers["Cache-Control"] = "no-store"
+    return resposta
+
+
+@bp.post("/protocolo/<protocolo>/autorizar-chat")
+def autorizar_chat(protocolo):
+    registro = validar_codigo_acesso(protocolo, request.form.get("codigo_chat"))
+    if registro is None:
+        flash(
+            "Código do chat inválido. Confira o código recebido com o protocolo.",
+            "erro",
+        )
+    else:
+        session["chat_atendimento_id"] = registro["id"]
+        session["chat_codigo_exibicao"] = (
+            request.form.get("codigo_chat", "").strip().upper()
+        )
+        flash("Chat liberado neste dispositivo.", "sucesso")
+    return redirect(url_for("public.protocolo", protocolo=protocolo.strip().upper()))
+
+
+def _chat_publico(protocolo):
+    registro = obter_por_protocolo(protocolo)
+    if registro is None:
+        return None, (jsonify({"erro": "Protocolo não encontrado."}), 404)
+    if session.get("chat_atendimento_id") != registro["id"]:
+        return None, (
+            jsonify({"erro": "Informe o código do chat para acessar as mensagens."}),
+            403,
+        )
+    return registro, None
+
+
+@bp.get("/api/public/chat/<protocolo>/mensagens")
+def mensagens_chat_publico(protocolo):
+    registro, erro = _chat_publico(protocolo)
+    if erro:
+        return erro
+    mensagens = listar_mensagens(
+        registro["id"], "CIDADAO", request.args.get("depois_de", 0)
+    )
+    return jsonify(
+        {
+            "mensagens": mensagens,
+            "status": registro["status"],
+            "aberto": registro["status"] == StatusAtendimento.EM_ATENDIMENTO.value,
+            "lido_ate": ultima_mensagem_lida(registro["id"], "CIDADAO"),
+        }
+    )
+
+
+@bp.post("/api/public/chat/<protocolo>/mensagens")
+def enviar_chat_publico(protocolo):
+    registro, erro = _chat_publico(protocolo)
+    if erro:
+        return erro
+    try:
+        mensagem = enviar_mensagem(
+            registro["id"], "CIDADAO", request.form.get("conteudo")
+        )
+    except RegraDeNegocioError as error:
+        status = 409 if "apenas durante o atendimento" in str(error) else 400
+        return jsonify({"erro": str(error)}), status
+    return jsonify({"mensagem": mensagem}), 201
 
 
 @bp.get("/api/public/protocolo/<protocolo>")

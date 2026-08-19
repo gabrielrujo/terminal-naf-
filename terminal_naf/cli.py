@@ -35,7 +35,7 @@ def seed_demo():
 @click.command("reset-demo")
 @click.option("--yes", is_flag=True, help="Confirma a limpeza sem pergunta interativa.")
 def reset_demo(yes):
-    """Faz backup e limpa atendimentos/avaliações, preservando usuários e serviços."""
+    """Faz backup e limpa a operação, preservando usuários e serviços."""
     if not yes and not click.confirm("Fazer backup e limpar os atendimentos da demonstração?"):
         click.echo("Operação cancelada.")
         return
@@ -54,4 +54,7 @@ def reset_demo(yes):
     source.execute("DELETE FROM sequencias")
     source.commit()
     click.echo(f"Backup criado em: {backup_path}")
-    click.echo("Atendimentos e avaliações removidos; usuários e serviços foram preservados.")
+    click.echo(
+        "Atendimentos, avaliações e chats removidos; "
+        "usuários e serviços foram preservados."
+    )

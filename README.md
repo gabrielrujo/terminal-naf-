@@ -7,10 +7,10 @@ kiosk.
 
 O projeto possui duas experiências independentes:
 
-- **terminal público:** triagem, emissão de senha, acompanhamento do protocolo e
-  avaliação pelo cidadão;
-- **área interna:** login, fila operacional, painel do atendente, dashboard e
-  cadastros administrativos.
+- **terminal público:** triagem, emissão de senha, acompanhamento do protocolo,
+  chat com o atendente e avaliação pelo cidadão;
+- **área interna:** login, fila operacional, chat, painel do atendente, dashboard
+  e cadastros administrativos.
 
 ## Estado da V2
 
@@ -24,6 +24,8 @@ confirmar seleção
 AGUARDANDO
       ↓
 EM_ATENDIMENTO
+      ↕
+chat cidadão ↔ atendente
       ↓
 CONCLUIDO
       ↓
@@ -44,16 +46,25 @@ diferenciam senhas emitidas, aguardando, em atendimento, concluídas e cancelada
 - escolhe e confirma o serviço antes da criação do atendimento;
 - recebe uma senha sequencial amigável, como `A001`;
 - recebe um protocolo único, como `NAF-20260818-0001`;
+- recebe um código aleatório de oito caracteres que protege o chat;
 - acompanha o status por uma página que consulta o servidor automaticamente;
+- troca mensagens de texto com o atendente enquanto o estado é
+  `EM_ATENDIMENTO` e vê a confirmação de leitura;
+- consulta as mensagens depois da conclusão ou do cancelamento, sem poder enviar
+  novas mensagens;
 - avalia de 1 a 5 somente depois da conclusão;
 - não consegue avaliar protocolo inexistente, não concluído ou já avaliado;
-- retorna ao início após 60 segundos sem interação nas páginas públicas.
+- retorna ao início após 60 segundos sem interação nas páginas públicas; a
+  página autorizada do chat permanece aberta enquanto aguarda ou realiza o
+  atendimento.
 
 ### Atendente
 
 - acessa o painel próprio em `/atendente`;
 - visualiza resumo, fila por ordem de chegada e atendimento atual;
 - chama, inicia, conclui ou cancela conforme o estado permitido;
+- conversa com o cidadão no painel durante o atendimento e vê a confirmação de
+  leitura;
 - visualiza o histórico dos próprios atendimentos;
 - não pode concluir uma senha que nunca foi iniciada;
 - não pode assumir/cancelar um atendimento atribuído a outro atendente;
@@ -75,7 +86,7 @@ diferenciam senhas emitidas, aguardando, em atendimento, concluídas e cancelada
 - Python 3.11 ou superior;
 - Flask 3;
 - SQLite com chaves estrangeiras e restrições no schema;
-- Jinja, CSS e JavaScript locais, sem framework ou CDN;
+- Jinja, CSS e JavaScript locais, sem framework, CDN ou serviço externo de chat;
 - `unittest` para testes automatizados.
 
 A V2 usa diretamente a biblioteca `sqlite3` do Python. Isso mantém a instalação
@@ -101,6 +112,7 @@ terminal-naf/
 │   │   └── admin.py             # dashboard e cadastros
 │   ├── services/
 │   │   ├── atendimentos.py      # transições e geração de protocolo
+│   │   ├── chat.py              # acesso, mensagens e recibos de leitura
 │   │   ├── catalogo.py          # serviços e materiais iniciais
 │   │   ├── indicadores.py       # métricas e filtros
 │   │   └── usuarios.py          # contas e autenticação
@@ -135,11 +147,15 @@ Entidades:
 - `usuarios`: funcionários e coordenadores, nunca cidadãos;
 - `servicos`: catálogo utilizado pela triagem pública;
 - `atendimentos`: senha, protocolo, serviço, estado, responsável e horários;
+- `chat_acessos`: hash do código aleatório vinculado ao atendimento;
+- `mensagens`: texto, autor, horário e confirmação de leitura do chat;
 - `avaliacoes`: uma nota por atendimento concluído;
 - `sequencias`: numeração diária das senhas sem sorteio aleatório.
 
-Não são armazenados CPF, renda, endereço, documentos ou outros dados pessoais do
-cidadão.
+Não existem campos cadastrais para CPF, renda, endereço ou documentos do
+cidadão. Como as mensagens são texto livre e persistem no banco, a interface
+orienta os dois participantes a não enviarem dados pessoais, senhas, documentos
+ou dados bancários.
 
 ## Instalação
 
@@ -214,14 +230,15 @@ anônima.
 
 1. No terminal público, clique em **Iniciar atendimento**.
 2. Escolha **MEI**, revise a seleção e confirme.
-3. Anote a senha `A001` e mantenha a página do protocolo aberta.
+3. Anote a senha `A001`, o protocolo e o código do chat; mantenha a página aberta.
 4. Em outra janela, entre com `atendente` / `atendente123`.
 5. Na fila, chame ou inicie a senha.
-6. Conclua o atendimento.
-7. Volte à página pública: o status mudará automaticamente para concluído.
-8. Clique em **Avaliar atendimento** e registre a nota 5.
-9. Tente abrir a avaliação novamente para verificar o bloqueio de duplicidade.
-10. Entre com `admin` / `admin123` e abra o dashboard em **Total geral**.
+6. Envie uma mensagem pela página pública e responda no painel do atendente.
+7. Observe o indicador **Lida** depois que a outra janela consultar a conversa.
+8. Conclua o atendimento; o chat continuará visível, mas ficará somente leitura.
+9. Volte à página pública e registre a avaliação com nota 5.
+10. Tente abrir a avaliação novamente para verificar o bloqueio de duplicidade.
+11. Entre com `admin` / `admin123` e abra o dashboard em **Total geral**.
 
 O resultado esperado é uma senha emitida, um atendimento concluído, média 5,0 e
 MEI com uma conclusão.
@@ -240,7 +257,8 @@ Para automação sem confirmação interativa:
 flask --app run.py reset-demo --yes
 ```
 
-O comando remove somente atendimentos, avaliações e sequências. Usuários e
+O comando remove atendimentos, avaliações, mensagens, acessos de chat e
+sequências. Mensagens e acessos saem em cascata com o atendimento; usuários e
 serviços são preservados. O caminho do backup é exibido no terminal e os arquivos
 ficam em `backups/`.
 
@@ -265,6 +283,11 @@ Os testes da V2 cobrem:
 - bloqueio de avaliação por uma sessão da equipe;
 - autenticação e separação de perfis;
 - indicadores administrativos;
+- troca de mensagens entre cidadão e atendente;
+- código de acesso obrigatório em outro navegador;
+- isolamento entre atendentes;
+- bloqueio de mensagens antes do início e depois do encerramento;
+- validação do tamanho e confirmação de leitura;
 - proteção CSRF.
 
 Cada teste utiliza um banco temporário e não altera os dados da demonstração.
@@ -302,6 +325,12 @@ privilégios e um servidor WSGI em vez do servidor de desenvolvimento do Flask.
 - autenticação por sessão com cookie `HttpOnly` e `SameSite=Lax`;
 - proteção CSRF em operações de escrita;
 - autorização server-side para atendente e administrador;
+- código de chat armazenado somente como hash e autorização pública vinculada à
+  sessão;
+- identidade do autor definida no servidor, sem confiar no tipo enviado pelo
+  navegador;
+- mensagens limitadas a texto de até 1.000 caracteres e renderizadas no frontend
+  com `textContent`;
 - validação das transições de estado no servidor;
 - restrições de integridade e unicidade também no SQLite;
 - páginas amigáveis para erros 400, 403, 404 e 500;
@@ -309,7 +338,7 @@ privilégios e um servidor WSGI em vez do servidor de desenvolvimento do Flask.
 
 Em produção, ainda é necessário usar HTTPS, `NAF_COOKIE_SECURE=1`, uma chave de
 sessão secreta, servidor WSGI, política de backup externo e limitação de
-tentativas no login.
+tentativas no login e na validação do código do chat.
 
 ## V1 preservada
 

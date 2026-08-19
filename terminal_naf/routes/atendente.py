@@ -1,6 +1,15 @@
 """Painel operacional compartilhado por atendentes e administradores."""
 
-from flask import Blueprint, flash, g, redirect, render_template, request, url_for
+from flask import (
+    Blueprint,
+    flash,
+    g,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 
 from ..models import Perfil, RegraDeNegocioError
 from ..security import roles_required
@@ -11,6 +20,12 @@ from ..services.atendimentos import (
     iniciar_atendimento,
     listar_atendimentos,
     listar_fila,
+)
+from ..services.chat import (
+    enviar_mensagem,
+    listar_mensagens,
+    obter_atendimento,
+    ultima_mensagem_lida,
 )
 from ..services.indicadores import resumo_operacao
 
@@ -98,3 +113,56 @@ def cancelar(atendimento_id):
         "Atendimento cancelado.",
         motivo=request.form.get("motivo", ""),
     )
+
+
+def _chat_permitido(atendimento_id):
+    atendimento = obter_atendimento(atendimento_id)
+    if atendimento is None:
+        return None, (jsonify({"erro": "Atendimento não encontrado."}), 404)
+    if (
+        atendimento["atendente_id"] != g.usuario.id
+        and g.usuario.perfil != Perfil.ADMIN
+    ):
+        return None, (
+            jsonify({"erro": "Este atendimento pertence a outro atendente."}),
+            403,
+        )
+    return atendimento, None
+
+
+@bp.get("/api/atendimentos/<int:atendimento_id>/mensagens")
+@equipe_required
+def mensagens_chat(atendimento_id):
+    atendimento, erro = _chat_permitido(atendimento_id)
+    if erro:
+        return erro
+    mensagens = listar_mensagens(
+        atendimento_id, "ATENDENTE", request.args.get("depois_de", 0)
+    )
+    return jsonify(
+        {
+            "mensagens": mensagens,
+            "status": atendimento["status"],
+            "aberto": atendimento["status"] == "EM_ATENDIMENTO",
+            "lido_ate": ultima_mensagem_lida(atendimento_id, "ATENDENTE"),
+        }
+    )
+
+
+@bp.post("/api/atendimentos/<int:atendimento_id>/mensagens")
+@equipe_required
+def enviar_chat(atendimento_id):
+    atendimento, erro = _chat_permitido(atendimento_id)
+    if erro:
+        return erro
+    try:
+        mensagem = enviar_mensagem(
+            atendimento_id,
+            "ATENDENTE",
+            request.form.get("conteudo"),
+            autor_usuario_id=g.usuario.id,
+        )
+    except RegraDeNegocioError as error:
+        status = 409 if "apenas durante o atendimento" in str(error) else 400
+        return jsonify({"erro": str(error)}), status
+    return jsonify({"mensagem": mensagem}), 201

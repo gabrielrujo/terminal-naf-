@@ -28,6 +28,37 @@
     </form>
   </div>
 </section>
+
+<section class="chat-shell staff-chat">
+  <header class="chat-heading">
+    <div><span class="eyebrow">Conversa em tempo real</span><h2>Chat com o cidadão</h2></div>
+    <span class="chat-privacy">{{ atual['senha'] }} · {{ atual['protocolo'] }}</span>
+  </header>
+  <div
+    class="chat-app"
+    data-chat
+    data-chat-side="ATENDENTE"
+    data-chat-status="{{ atual['status'] }}"
+    data-chat-get-url="{{ url_for('atendente.mensagens_chat', atendimento_id=atual['id']) }}"
+    data-chat-post-url="{{ url_for('atendente.enviar_chat', atendimento_id=atual['id']) }}"
+  >
+    <div class="chat-state-line">
+      <span class="chat-live-dot" aria-hidden="true"></span>
+      <strong data-chat-state>Conversa aberta</strong>
+      <span data-chat-feedback aria-live="polite"></span>
+    </div>
+    <div class="chat-timeline" data-chat-messages role="log" aria-live="polite" aria-label="Mensagens do atendimento">
+      <div class="chat-empty" data-chat-empty><strong>Nenhuma mensagem ainda</strong><span>Use este canal para orientar o cidadão durante o atendimento.</span></div>
+    </div>
+    <form class="chat-composer" data-chat-form>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label class="sr-only" for="chat-atendente-{{ atual['id'] }}">Mensagem</label>
+      <textarea id="chat-atendente-{{ atual['id'] }}" name="conteudo" rows="2" maxlength="1000" placeholder="Escreva uma orientação..." data-chat-input></textarea>
+      <button class="button primary chat-send" type="submit" data-chat-send>Enviar</button>
+    </form>
+    <small class="chat-helper">A conversa ficará disponível para consulta após o encerramento.</small>
+  </div>
+</section>
 {% elif chamado %}
 <section class="current-service called">
   <div class="section-heading"><div><span class="eyebrow">Senha chamada</span><h2>{{ chamado['senha'] }} · {{ chamado['servico_nome'] }}</h2></div><span class="status-chip chamado">Aguardando início</span></div>

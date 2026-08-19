@@ -6,6 +6,7 @@ from datetime import date
 from ..database import get_db
 from ..models import Perfil, RegraDeNegocioError, StatusAtendimento
 from .catalogo import agora_iso
+from .chat import gerar_codigo_acesso, hash_codigo_acesso
 
 
 ATENDIMENTO_SELECT = """
@@ -32,8 +33,10 @@ def obter_por_protocolo(protocolo):
     ).fetchone()
 
 
-def criar_atendimento(servico_id):
+def _criar_atendimento(servico_id):
     db = get_db()
+    codigo_chat = gerar_codigo_acesso()
+    codigo_chat_hash = hash_codigo_acesso(codigo_chat)
     try:
         db.execute("BEGIN IMMEDIATE")
         servico = db.execute(
@@ -63,11 +66,28 @@ def criar_atendimento(servico_id):
             """,
             (senha, protocolo, servico_id, agora_iso()),
         )
+        atendimento_id = cursor.lastrowid
+        db.execute(
+            """
+            INSERT INTO chat_acessos (atendimento_id, codigo_hash, criado_em)
+            VALUES (?, ?, ?)
+            """,
+            (atendimento_id, codigo_chat_hash, agora_iso()),
+        )
         db.commit()
     except Exception:
         db.rollback()
         raise
-    return _por_id(cursor.lastrowid)
+    return _por_id(atendimento_id), codigo_chat
+
+
+def criar_atendimento(servico_id):
+    registro, _codigo_chat = _criar_atendimento(servico_id)
+    return registro
+
+
+def criar_atendimento_com_acesso(servico_id):
+    return _criar_atendimento(servico_id)
 
 
 def listar_fila():

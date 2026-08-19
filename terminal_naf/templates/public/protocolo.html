@@ -26,6 +26,76 @@
   </p>
 </section>
 
+<section class="chat-shell public-chat">
+  <header class="chat-heading">
+    <div>
+      <span class="eyebrow">Canal do atendimento</span>
+      <h2>Converse com o atendente</h2>
+    </div>
+    <span class="chat-privacy">Somente texto · acesso protegido</span>
+  </header>
+
+  {% if codigo_chat %}
+  <div class="chat-access-code" data-chat-access-code="{{ codigo_chat }}">
+    <div>
+      <small>Código deste chat</small>
+      <strong>{{ codigo_chat }}</strong>
+    </div>
+    <p>Guarde este código junto com o protocolo. Ele libera a conversa em outro dispositivo.</p>
+  </div>
+  {% endif %}
+
+  {% if chat_autorizado %}
+  <div
+    class="chat-app"
+    data-chat
+    data-chat-side="CIDADAO"
+    data-chat-status="{{ atendimento['status'] }}"
+    data-chat-get-url="{{ url_for('public.mensagens_chat_publico', protocolo=atendimento['protocolo']) }}"
+    data-chat-post-url="{{ url_for('public.enviar_chat_publico', protocolo=atendimento['protocolo']) }}"
+  >
+    <div class="chat-state-line">
+      <span class="chat-live-dot" aria-hidden="true"></span>
+      <strong data-chat-state>
+        {% if atendimento['status'] == 'EM_ATENDIMENTO' %}Conversa aberta
+        {% elif atendimento['status'] == 'AGUARDANDO' %}Aguardando o início do atendimento
+        {% else %}Conversa encerrada · disponível para consulta{% endif %}
+      </strong>
+      <span data-chat-feedback aria-live="polite"></span>
+    </div>
+    <div class="chat-timeline" data-chat-messages role="log" aria-live="polite" aria-label="Mensagens do atendimento">
+      <div class="chat-empty" data-chat-empty>
+        <strong>Nenhuma mensagem ainda</strong>
+        <span>{% if atendimento['status'] == 'AGUARDANDO' %}A conversa será liberada quando o atendimento começar.{% else %}Envie a primeira mensagem para o atendente.{% endif %}</span>
+      </div>
+    </div>
+    <form class="chat-composer" data-chat-form>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label class="sr-only" for="chat-cidadao-{{ atendimento['id'] }}">Mensagem</label>
+      <textarea id="chat-cidadao-{{ atendimento['id'] }}" name="conteudo" rows="2" maxlength="1000" placeholder="Escreva sua mensagem..." data-chat-input {% if atendimento['status'] != 'EM_ATENDIMENTO' %}disabled{% endif %}></textarea>
+      <button class="button primary chat-send" type="submit" data-chat-send {% if atendimento['status'] != 'EM_ATENDIMENTO' %}disabled{% endif %}>Enviar</button>
+    </form>
+    <small class="chat-helper">Não envie CPF, senhas, documentos ou dados bancários pelo chat.</small>
+  </div>
+  {% else %}
+  <div class="chat-locked">
+    <div class="chat-lock-icon" aria-hidden="true">⌁</div>
+    <div>
+      <strong>Mensagens protegidas</strong>
+      <p>Informe o código entregue na emissão da senha para abrir a conversa neste dispositivo.</p>
+    </div>
+    <form method="post" action="{{ url_for('public.autorizar_chat', protocolo=atendimento['protocolo']) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label for="codigo-chat">Código do chat</label>
+      <div>
+        <input id="codigo-chat" name="codigo_chat" type="text" maxlength="8" autocomplete="one-time-code" placeholder="Ex.: A7K9P2WX" required>
+        <button class="button secondary" type="submit">Liberar chat</button>
+      </div>
+    </form>
+  </div>
+  {% endif %}
+</section>
+
 <div class="public-actions centered-actions">
   <a class="button primary {{ '' if atendimento['status'] == 'CONCLUIDO' and atendimento['avaliacao_nota'] is none else 'hidden' }}" data-evaluation-link href="{{ url_for('public.avaliacao', protocolo=atendimento['protocolo']) }}">Avaliar atendimento</a>
   <span class="evaluated-note {{ '' if atendimento['avaliacao_nota'] is not none else 'hidden' }}" data-evaluated-note>✓ Avaliação já registrada</span>

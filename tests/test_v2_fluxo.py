@@ -4,7 +4,7 @@ import unittest
 
 from terminal_naf import create_app
 from terminal_naf.database import get_db
-from terminal_naf.services.usuarios import seed_demo_data
+from terminal_naf.services.usuarios import criar_usuario, seed_demo_data
 
 
 class TerminalNafV2TestCase(unittest.TestCase):
@@ -169,6 +169,150 @@ class TerminalNafV2TestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         for texto in ("Senhas emitidas", "Concluídos", "5.0", "MEI"):
             self.assertIn(texto.encode(), response.data)
+
+    def test_chat_troca_mensagens_e_registra_leitura(self):
+        atendimento = self.criar_atendimento()
+        cidadao = self.client
+        equipe = self.app.test_client()
+        equipe.post("/login", data={"usuario": "atendente", "senha": "atendente123"})
+        equipe.post(f"/atendente/atendimentos/{atendimento['id']}/iniciar")
+        painel = equipe.get("/atendente")
+        self.assertEqual(painel.status_code, 200)
+        self.assertIn(b"Chat com o cidad", painel.data)
+
+        resposta = cidadao.post(
+            f"/api/public/chat/{atendimento['protocolo']}/mensagens",
+            data={"conteudo": "Preciso separar algum documento?"},
+        )
+        self.assertEqual(resposta.status_code, 201)
+        mensagem_cidadao = resposta.get_json()["mensagem"]
+        self.assertEqual(mensagem_cidadao["autor_tipo"], "CIDADAO")
+
+        consulta_equipe = equipe.get(
+            f"/atendente/api/atendimentos/{atendimento['id']}/mensagens"
+        )
+        self.assertEqual(consulta_equipe.status_code, 200)
+        self.assertEqual(
+            consulta_equipe.get_json()["mensagens"][0]["conteudo"],
+            "Preciso separar algum documento?",
+        )
+
+        consulta_cidadao = cidadao.get(
+            f"/api/public/chat/{atendimento['protocolo']}/mensagens"
+        )
+        self.assertGreaterEqual(
+            consulta_cidadao.get_json()["lido_ate"], mensagem_cidadao["id"]
+        )
+
+        resposta_equipe = equipe.post(
+            f"/atendente/api/atendimentos/{atendimento['id']}/mensagens",
+            data={"conteudo": "Sim. Separe apenas os documentos solicitados na orientação."},
+        )
+        self.assertEqual(resposta_equipe.status_code, 201)
+        mensagem_equipe = resposta_equipe.get_json()["mensagem"]
+        self.assertEqual(mensagem_equipe["autor_tipo"], "ATENDENTE")
+        self.assertEqual(mensagem_equipe["autor_nome"], "Atendente Demonstração")
+
+        mensagens = cidadao.get(
+            f"/api/public/chat/{atendimento['protocolo']}/mensagens"
+        ).get_json()["mensagens"]
+        self.assertEqual([item["autor_tipo"] for item in mensagens], ["CIDADAO", "ATENDENTE"])
+
+        leitura_equipe = equipe.get(
+            f"/atendente/api/atendimentos/{atendimento['id']}/mensagens"
+        ).get_json()
+        self.assertGreaterEqual(leitura_equipe["lido_ate"], mensagem_equipe["id"])
+        self.assertEqual(self.query_one("SELECT COUNT(*) AS n FROM mensagens")["n"], 2)
+
+    def test_chat_so_permite_envio_durante_atendimento(self):
+        atendimento = self.criar_atendimento()
+        cidadao = self.client
+        equipe = self.app.test_client()
+
+        aguardando = cidadao.post(
+            f"/api/public/chat/{atendimento['protocolo']}/mensagens",
+            data={"conteudo": "Mensagem antes do início"},
+        )
+        self.assertEqual(aguardando.status_code, 409)
+
+        equipe.post("/login", data={"usuario": "atendente", "senha": "atendente123"})
+        equipe.post(f"/atendente/atendimentos/{atendimento['id']}/iniciar")
+        durante = cidadao.post(
+            f"/api/public/chat/{atendimento['protocolo']}/mensagens",
+            data={"conteudo": "Mensagem durante o atendimento"},
+        )
+        self.assertEqual(durante.status_code, 201)
+        equipe.post(f"/atendente/atendimentos/{atendimento['id']}/concluir")
+
+        encerrado = cidadao.post(
+            f"/api/public/chat/{atendimento['protocolo']}/mensagens",
+            data={"conteudo": "Mensagem depois da conclusão"},
+        )
+        self.assertEqual(encerrado.status_code, 409)
+        consulta = cidadao.get(
+            f"/api/public/chat/{atendimento['protocolo']}/mensagens"
+        )
+        self.assertEqual(consulta.status_code, 200)
+        self.assertFalse(consulta.get_json()["aberto"])
+        self.assertEqual(len(consulta.get_json()["mensagens"]), 1)
+
+    def test_chat_publico_exige_codigo_em_outro_dispositivo(self):
+        atendimento = self.criar_atendimento()
+        pagina = self.client.get(f"/protocolo/{atendimento['protocolo']}")
+        marcador = b'data-chat-access-code="'
+        inicio = pagina.data.index(marcador) + len(marcador)
+        codigo = pagina.data[inicio : pagina.data.index(b'"', inicio)].decode()
+        self.assertEqual(len(codigo), 8)
+
+        visitante = self.app.test_client()
+        url_api = f"/api/public/chat/{atendimento['protocolo']}/mensagens"
+        self.assertEqual(visitante.get(url_api).status_code, 403)
+        visitante.post(
+            f"/protocolo/{atendimento['protocolo']}/autorizar-chat",
+            data={"codigo_chat": "INVALIDO"},
+        )
+        self.assertEqual(visitante.get(url_api).status_code, 403)
+        visitante.post(
+            f"/protocolo/{atendimento['protocolo']}/autorizar-chat",
+            data={"codigo_chat": codigo.lower()},
+        )
+        self.assertEqual(visitante.get(url_api).status_code, 200)
+
+    def test_chat_impede_acesso_de_outro_atendente(self):
+        atendimento = self.criar_atendimento()
+        responsavel = self.app.test_client()
+        responsavel.post(
+            "/login", data={"usuario": "atendente", "senha": "atendente123"}
+        )
+        responsavel.post(f"/atendente/atendimentos/{atendimento['id']}/iniciar")
+        with self.app.app_context():
+            criar_usuario(
+                "Segundo Atendente", "atendente2", "atendente456", "ATENDENTE"
+            )
+
+        outro = self.app.test_client()
+        outro.post(
+            "/login", data={"usuario": "atendente2", "senha": "atendente456"}
+        )
+        url = f"/atendente/api/atendimentos/{atendimento['id']}/mensagens"
+        self.assertEqual(outro.get(url).status_code, 403)
+        self.assertEqual(
+            outro.post(url, data={"conteudo": "Não deveria enviar"}).status_code,
+            403,
+        )
+
+    def test_chat_valida_conteudo_da_mensagem(self):
+        atendimento = self.criar_atendimento()
+        equipe = self.app.test_client()
+        equipe.post("/login", data={"usuario": "atendente", "senha": "atendente123"})
+        equipe.post(f"/atendente/atendimentos/{atendimento['id']}/iniciar")
+        url = f"/api/public/chat/{atendimento['protocolo']}/mensagens"
+        self.assertEqual(self.client.post(url, data={"conteudo": "   "}).status_code, 400)
+        self.assertEqual(
+            self.client.post(url, data={"conteudo": "x" * 1001}).status_code,
+            400,
+        )
+        self.assertEqual(self.query_one("SELECT COUNT(*) AS n FROM mensagens")["n"], 0)
 
 
 class CsrfV2TestCase(unittest.TestCase):
