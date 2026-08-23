@@ -319,6 +319,32 @@ O executável pode se chamar `chromium-browser`, conforme a distribuição Linux
 Para implantação permanente, configure um serviço `systemd` com usuário sem
 privilégios e um servidor WSGI em vez do servidor de desenvolvimento do Flask.
 
+## Preview na Vercel
+
+A V2 pode ser publicada como **preview temporário** para validar páginas, login,
+fila e um fluxo curto do chat:
+
+```bash
+npx vercel link
+npx vercel
+```
+
+O `pyproject.toml` aponta explicitamente para `run:app`, evitando que a Vercel
+publique por engano a V1 preservada em `app.py`. Os arquivos de frontend ficam
+em `public/static/`, compatíveis com o CDN da plataforma.
+
+O SQLite não possui armazenamento persistente nas Vercel Functions. Por isso,
+os ambientes `preview` e `development` usam um banco efêmero em `/tmp` com as
+contas de demonstração. Para permitir conscientemente a mesma demonstração no
+primeiro deploy criado pela interface web, configure
+`NAF_ALLOW_EPHEMERAL_VERCEL=1`. Os dados podem desaparecer ou divergir entre
+instâncias a qualquer momento. Esse modo serve para demonstração curta, não para
+validar persistência, concorrência ou disponibilidade do chat.
+
+Deploy de `production` é bloqueado enquanto o SQLite não for substituído por um
+banco externo compartilhado, exceto quando essa variável de demonstração estiver
+explicitamente habilitada.
+
 ## Segurança aplicada
 
 - senha armazenada somente como hash do Werkzeug;

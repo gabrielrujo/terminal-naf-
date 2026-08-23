@@ -331,5 +331,66 @@ class CsrfV2TestCase(unittest.TestCase):
             os.unlink(database_path)
 
 
+class VercelPreviewV2TestCase(unittest.TestCase):
+    def test_preview_usa_banco_efemero_e_cria_contas_demo(self):
+        arquivo, database_path = tempfile.mkstemp(suffix=".db")
+        os.close(arquivo)
+        try:
+            app = create_app(
+                {
+                    "TESTING": True,
+                    "DATABASE": None,
+                    "IS_VERCEL": True,
+                    "VERCEL_ENV": "preview",
+                    "VERCEL_EPHEMERAL_DEMO": True,
+                    "VERCEL_PREVIEW_DATABASE": database_path,
+                    "SECRET_KEY": "preview-test",
+                    "CSRF_ENABLED": False,
+                }
+            )
+            self.assertEqual(app.config["DATABASE"], database_path)
+            response = app.test_client().post(
+                "/login", data={"usuario": "atendente", "senha": "atendente123"}
+            )
+            self.assertEqual(response.status_code, 302)
+            with app.app_context():
+                usuarios = get_db().execute(
+                    "SELECT COUNT(*) AS n FROM usuarios"
+                ).fetchone()["n"]
+            self.assertEqual(usuarios, 2)
+        finally:
+            os.unlink(database_path)
+
+    def test_producao_vercel_e_bloqueada_com_sqlite(self):
+        with self.assertRaisesRegex(RuntimeError, "SQLite local não é persistente"):
+            create_app(
+                {
+                    "TESTING": True,
+                    "DATABASE": None,
+                    "IS_VERCEL": True,
+                    "VERCEL_ENV": "production",
+                }
+            )
+
+    def test_producao_vercel_permite_demo_efemera_com_opt_in(self):
+        arquivo, database_path = tempfile.mkstemp(suffix=".db")
+        os.close(arquivo)
+        try:
+            app = create_app(
+                {
+                    "TESTING": True,
+                    "DATABASE": None,
+                    "IS_VERCEL": True,
+                    "VERCEL_ENV": "production",
+                    "VERCEL_EPHEMERAL_DEMO": True,
+                    "VERCEL_PREVIEW_DATABASE": database_path,
+                    "SECRET_KEY": "production-preview-test",
+                }
+            )
+            self.assertEqual(app.config["DATABASE"], database_path)
+        finally:
+            os.unlink(database_path)
+
+
 if __name__ == "__main__":
     unittest.main()

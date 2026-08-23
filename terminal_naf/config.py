@@ -14,3 +14,12 @@ class Config:
     PERMANENT_SESSION_LIFETIME = timedelta(hours=8)
     CSRF_ENABLED = True
     MAX_CONTENT_LENGTH = 1 * 1024 * 1024
+    IS_VERCEL = os.environ.get("VERCEL") == "1"
+    VERCEL_ENV = os.environ.get("VERCEL_ENV", "")
+    VERCEL_EPHEMERAL_DEMO = IS_VERCEL and (
+        VERCEL_ENV in {"preview", "development"}
+        or os.environ.get("NAF_ALLOW_EPHEMERAL_VERCEL") == "1"
+    )
+    VERCEL_PREVIEW_DATABASE = os.environ.get(
+        "NAF_VERCEL_PREVIEW_DATABASE", "/tmp/terminal_naf_v2_preview.db"
+    )

@@ -13,15 +13,36 @@ from .services.catalogo import garantir_servicos_iniciais
 
 
 def create_app(test_config=None):
-    app = Flask(__name__, instance_relative_config=True)
+    static_folder = Path(__file__).resolve().parent.parent / "public" / "static"
+    app = Flask(
+        __name__,
+        instance_relative_config=True,
+        static_folder=str(static_folder),
+        static_url_path="/static",
+    )
     app.config.from_object(Config)
 
     if test_config:
         app.config.update(test_config)
 
-    Path(app.instance_path).mkdir(parents=True, exist_ok=True)
+    if (
+        app.config.get("IS_VERCEL")
+        and app.config.get("VERCEL_ENV") == "production"
+        and not app.config.get("VERCEL_EPHEMERAL_DEMO")
+    ):
+        raise RuntimeError(
+            "Deploy de produção bloqueado: o SQLite local não é persistente na Vercel."
+        )
+
+    if not app.config.get("VERCEL_EPHEMERAL_DEMO"):
+        Path(app.instance_path).mkdir(parents=True, exist_ok=True)
     if not app.config.get("DATABASE"):
-        app.config["DATABASE"] = str(Path(app.instance_path) / "terminal_naf_v2.db")
+        if app.config.get("VERCEL_EPHEMERAL_DEMO"):
+            app.config["DATABASE"] = app.config["VERCEL_PREVIEW_DATABASE"]
+        else:
+            app.config["DATABASE"] = str(
+                Path(app.instance_path) / "terminal_naf_v2.db"
+            )
     if not app.config.get("BACKUP_DIR"):
         app.config["BACKUP_DIR"] = str(Path(app.root_path).parent / "backups")
 
@@ -45,6 +66,10 @@ def create_app(test_config=None):
     with app.app_context():
         database.init_db()
         garantir_servicos_iniciais()
+        if app.config.get("VERCEL_EPHEMERAL_DEMO"):
+            from .services.usuarios import seed_demo_data
+
+            seed_demo_data()
 
     return app
 
