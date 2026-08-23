@@ -329,9 +329,10 @@ npx vercel link
 npx vercel
 ```
 
-O `pyproject.toml` aponta explicitamente para `run:app`, evitando que a Vercel
-publique por engano a V1 preservada em `app.py`. Os arquivos de frontend ficam
-em `public/static/`, compatíveis com o CDN da plataforma.
+O `index.py` expõe explicitamente a aplicação V2 e o `pyproject.toml` aponta para
+`index:app`, evitando que a Vercel publique por engano a V1 preservada em
+`app.py`. Os arquivos de frontend ficam em `public/static/`, compatíveis com o
+CDN da plataforma.
 
 O SQLite não possui armazenamento persistente nas Vercel Functions. Por isso,
 os ambientes `preview` e `development` usam um banco efêmero em `/tmp` com as
