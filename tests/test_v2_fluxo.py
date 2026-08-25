@@ -341,6 +341,10 @@ class VercelPreviewV2TestCase(unittest.TestCase):
             configuracao["functions"]["index.py"]["includeFiles"],
             "terminal_naf/**",
         )
+        self.assertTrue(
+            (projeto / "terminal_naf/templates/cidadao/index.html").is_file()
+        )
+        self.assertFalse((projeto / "terminal_naf/templates/public").exists())
 
     def test_preview_usa_banco_efemero_e_cria_contas_demo(self):
         arquivo, database_path = tempfile.mkstemp(suffix=".db")

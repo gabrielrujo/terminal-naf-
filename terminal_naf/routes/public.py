@@ -44,12 +44,12 @@ def _servico_ativo(servico_id):
 def index():
     session.pop("chat_atendimento_id", None)
     session.pop("chat_codigo_exibicao", None)
-    return render_template("public/index.html")
+    return render_template("cidadao/index.html")
 
 
 @bp.get("/atendimento")
 def atendimento():
-    return render_template("public/atendimento.html", servicos=listar_servicos())
+    return render_template("cidadao/atendimento.html", servicos=listar_servicos())
 
 
 @bp.post("/atendimento/confirmar")
@@ -58,7 +58,7 @@ def confirmar_atendimento():
     if servico is None:
         flash("Escolha um serviço disponível.", "erro")
         return redirect(url_for("public.atendimento"))
-    return render_template("public/confirmar_atendimento.html", servico=servico)
+    return render_template("cidadao/confirmar_atendimento.html", servico=servico)
 
 
 @bp.post("/atendimento/criar")
@@ -87,7 +87,7 @@ def acompanhar():
             flash("Protocolo não encontrado.", "erro")
         else:
             return redirect(url_for("public.protocolo", protocolo=protocolo))
-    return render_template("public/acompanhar.html")
+    return render_template("cidadao/acompanhar.html")
 
 
 @bp.get("/protocolo/<protocolo>")
@@ -101,7 +101,7 @@ def protocolo(protocolo):
     )
     resposta = make_response(
         render_template(
-            "public/protocolo.html",
+            "cidadao/protocolo.html",
             atendimento=registro,
             chat_autorizado=chat_autorizado,
             codigo_chat=codigo_chat,
@@ -204,7 +204,7 @@ def avaliacao(protocolo):
         flash("A avaliação será liberada quando o atendimento for concluído.", "erro")
         return redirect(url_for("public.protocolo", protocolo=registro["protocolo"]))
     if registro["avaliacao_nota"] is not None:
-        return render_template("public/avaliacao.html", atendimento=registro, enviado=True)
+        return render_template("cidadao/avaliacao.html", atendimento=registro, enviado=True)
 
     if request.method == "POST":
         try:
@@ -212,15 +212,15 @@ def avaliacao(protocolo):
         except RegraDeNegocioError as error:
             flash(str(error), "erro")
         else:
-            return render_template("public/avaliacao.html", atendimento=registro, enviado=True)
-    return render_template("public/avaliacao.html", atendimento=registro, enviado=False)
+            return render_template("cidadao/avaliacao.html", atendimento=registro, enviado=True)
+    return render_template("cidadao/avaliacao.html", atendimento=registro, enviado=False)
 
 
 @bp.get("/informacoes")
 def informacoes():
-    return render_template("public/informacoes.html", servicos=listar_servicos())
+    return render_template("cidadao/informacoes.html", servicos=listar_servicos())
 
 
 @bp.get("/materiais")
 def materiais():
-    return render_template("public/materiais.html", materiais=MATERIAIS)
+    return render_template("cidadao/materiais.html", materiais=MATERIAIS)

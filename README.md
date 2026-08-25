@@ -117,7 +117,7 @@ terminal-naf/
 │   │   ├── indicadores.py       # métricas e filtros
 │   │   └── usuarios.py          # contas e autenticação
 │   ├── templates/
-│   │   ├── public/
+│   │   ├── cidadao/             # páginas públicas (nome seguro na Vercel)
 │   │   ├── auth/
 │   │   ├── atendente/
 │   │   ├── admin/
@@ -336,7 +336,9 @@ por engano a V1 preservada em `app.py`. As dependências são instaladas pelo
 `requirements.txt`, e os arquivos de frontend ficam em `public/static/`,
 compatíveis com o CDN da plataforma. O `vercel.json` inclui explicitamente todo
 o pacote `terminal_naf/` na função Python; isso garante a disponibilidade dos
-templates Jinja e do `schema.sql` em tempo de execução.
+templates Jinja e do `schema.sql` em tempo de execução. As páginas públicas usam
+o diretório de templates `cidadao/`, evitando conflito com o diretório especial
+`public/` que a Vercel reserva para arquivos estáticos.
 
 O SQLite não possui armazenamento persistente nas Vercel Functions. Por isso,
 os ambientes `preview` e `development` usam um banco efêmero em `/tmp` com as
