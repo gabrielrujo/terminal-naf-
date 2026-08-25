@@ -123,15 +123,17 @@ terminal-naf/
 │   │   ├── admin/
 │   │   ├── components/
 │   │   └── errors/
-│   └── static/
-│       ├── css/app.css
-│       └── js/app.js
+├── public/static/               # CSS e JavaScript publicados pela Vercel
+│   ├── css/app.css
+│   └── js/app.js
 ├── instance/                    # banco V2 local, ignorado pelo Git
 ├── backups/                     # backups locais, ignorados pelo Git
 ├── tests/
 │   ├── test_fluxo.py            # testes preservados da V1
 │   └── test_v2_fluxo.py         # regras críticas da V2
 ├── run.py                       # execução da V2
+├── index.py                     # entrada WSGI da Vercel
+├── vercel.json                  # inclui templates e schema na função
 ├── app.py                       # aplicação V1 preservada
 ├── requirements.txt
 └── README.md
@@ -332,7 +334,9 @@ npx vercel
 O `index.py` expõe explicitamente a aplicação V2, evitando que a Vercel publique
 por engano a V1 preservada em `app.py`. As dependências são instaladas pelo
 `requirements.txt`, e os arquivos de frontend ficam em `public/static/`,
-compatíveis com o CDN da plataforma.
+compatíveis com o CDN da plataforma. O `vercel.json` inclui explicitamente todo
+o pacote `terminal_naf/` na função Python; isso garante a disponibilidade dos
+templates Jinja e do `schema.sql` em tempo de execução.
 
 O SQLite não possui armazenamento persistente nas Vercel Functions. Por isso,
 os ambientes `preview` e `development` usam um banco efêmero em `/tmp` com as

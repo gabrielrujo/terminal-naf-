@@ -1,6 +1,8 @@
+import json
 import os
 import tempfile
 import unittest
+from pathlib import Path
 
 from terminal_naf import create_app
 from terminal_naf.database import get_db
@@ -332,6 +334,14 @@ class CsrfV2TestCase(unittest.TestCase):
 
 
 class VercelPreviewV2TestCase(unittest.TestCase):
+    def test_configuracao_inclui_recursos_da_aplicacao_na_funcao(self):
+        projeto = Path(__file__).resolve().parent.parent
+        configuracao = json.loads((projeto / "vercel.json").read_text())
+        self.assertEqual(
+            configuracao["functions"]["index.py"]["includeFiles"],
+            "terminal_naf/**",
+        )
+
     def test_preview_usa_banco_efemero_e_cria_contas_demo(self):
         arquivo, database_path = tempfile.mkstemp(suffix=".db")
         os.close(arquivo)
